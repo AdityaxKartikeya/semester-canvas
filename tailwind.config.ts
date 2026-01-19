@@ -57,6 +57,21 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // FFCS custom colors
+        theory: {
+          DEFAULT: "hsl(var(--theory))",
+          light: "hsl(var(--theory-light))",
+        },
+        lab: {
+          DEFAULT: "hsl(var(--lab))",
+          light: "hsl(var(--lab-light))",
+        },
+        lunch: {
+          DEFAULT: "hsl(var(--lunch))",
+          light: "hsl(var(--lunch-light))",
+        },
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
       },
       borderRadius: {
         lg: "var(--radius)",
