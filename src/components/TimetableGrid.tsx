@@ -1,46 +1,119 @@
 import { SlotCell } from './SlotCell';
-import { DAYS, THEORY_TIMES, LAB_TIMES, TIMETABLE_STRUCTURE, SlotAssignment } from '@/types/timetable';
+import { DAYS, TIMETABLE_STRUCTURE, SlotAssignment, Day } from '@/types/timetable';
 
 interface TimetableGridProps {
   assignments: Record<string, SlotAssignment>;
   onSlotClick: (slotCode: string, type: 'theory' | 'lab') => void;
 }
 
+// Time column headers matching the official timetable
+const TIME_HEADERS = [
+  '08:00', '09:00', '09:01', '10:00', '10:01', '11:00', '11:01', 
+  '12:00', '12:01', '13:00', 'LUNCH', '14:00', '14:01', '15:00', 
+  '15:01', '16:00', '16:01', '17:00', '17:01', '18:00'
+];
+
+// Map column indices to theory slot indices in TIMETABLE_STRUCTURE
+// Theory has 11 slots: indices 0-4 (morning), null for lunch, 6-10 (afternoon)
+// Columns 0,1,3,5,7,9 are main theory slots, others are subdivisions or empty
+const THEORY_COL_TO_SLOT: (number | null)[] = [
+  0,    // 08:00 -> theory[0]
+  1,    // 09:00 -> theory[1]
+  null, // 09:01 -> no theory
+  2,    // 10:00 -> theory[2]
+  3,    // 10:01 -> theory[3] (for double slots like E1)
+  4,    // 11:00 -> theory[4]
+  null, // 11:01 -> no theory
+  null, // 12:00 -> theory[5] is null (lunch transition)
+  null, // 12:01 -> no theory
+  null, // 13:00 -> no theory (some days have null here)
+  null, // LUNCH
+  6,    // 14:00 -> theory[6]
+  7,    // 14:01 -> theory[7]
+  8,    // 15:00 -> theory[8]
+  9,    // 15:01 -> theory[9]
+  10,   // 16:00 -> theory[10]
+  null, // 16:01 -> no theory
+  null, // 17:00 -> no theory
+  null, // 17:01 -> no theory
+  null, // 18:00 -> no theory
+];
+
+// Map column indices to lab slot indices in TIMETABLE_STRUCTURE
+// Labs have 12 slots per day: 6 morning (0-5) + 6 afternoon (6-11)
+const LAB_COL_TO_SLOT: (number | null)[] = [
+  0,    // 08:00 -> lab[0]
+  1,    // 09:00 -> lab[1]
+  null, // 09:01 -> no lab
+  2,    // 10:00 -> lab[2]
+  3,    // 10:01 -> lab[3]
+  4,    // 11:00 -> lab[4]
+  5,    // 11:01 -> lab[5]
+  null, // 12:00 -> no lab
+  null, // 12:01 -> no lab
+  null, // 13:00 -> no lab
+  null, // LUNCH
+  6,    // 14:00 -> lab[6]
+  7,    // 14:01 -> lab[7]
+  8,    // 15:00 -> lab[8]
+  9,    // 15:01 -> lab[9]
+  10,   // 16:00 -> lab[10]
+  11,   // 16:01 -> lab[11]
+  null, // 17:00 -> no lab
+  null, // 17:01 -> no lab
+  null, // 18:00 -> no lab
+];
+
 export function TimetableGrid({ assignments, onSlotClick }: TimetableGridProps) {
+  const getTheorySlot = (day: Day, colIndex: number): string | null => {
+    const slotIdx = THEORY_COL_TO_SLOT[colIndex];
+    if (slotIdx === null || slotIdx === undefined) return null;
+    return TIMETABLE_STRUCTURE[day].theory[slotIdx] || null;
+  };
+
+  const getLabSlot = (day: Day, colIndex: number): string | null => {
+    const slotIdx = LAB_COL_TO_SLOT[colIndex];
+    if (slotIdx === null || slotIdx === undefined) return null;
+    return TIMETABLE_STRUCTURE[day].lab[slotIdx] || null;
+  };
+
   return (
     <div className="timetable-container" id="timetable-export">
       <div className="timetable-header">
         <h2 className="text-xl font-bold text-primary">FFCS Timetable - Winter Semester 2025-26</h2>
+        <p className="text-sm text-muted-foreground mt-1">Click any slot to assign a course</p>
       </div>
       
-      {/* Theory Section */}
-      <div className="mb-6">
-        <div className="section-label">Theory Slots</div>
-        <div className="overflow-x-auto">
-          <table className="timetable-table">
-            <thead>
-              <tr>
-                <th className="timetable-th sticky-col">Day</th>
-                {THEORY_TIMES.map((time) => (
-                  <th key={time} className="timetable-th">
-                    {time === 'LUNCH' ? '🍽️' : time}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {DAYS.map((day) => (
-                <tr key={day}>
-                  <td className="timetable-td sticky-col font-bold">{day}</td>
-                  {THEORY_TIMES.map((time, idx) => {
+      {/* Unified Timetable */}
+      <div className="overflow-x-auto">
+        <table className="timetable-table unified-grid">
+          <thead>
+            <tr>
+              <th className="timetable-th sticky-col">Day</th>
+              <th className="timetable-th sticky-col-type">Type</th>
+              {TIME_HEADERS.map((time, idx) => (
+                <th key={`time-${idx}`} className="timetable-th time-header">
+                  {time === 'LUNCH' ? '🍽️' : time}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {DAYS.map((day) => (
+              <>
+                {/* Theory row */}
+                <tr key={`${day}-theory`} className="theory-row">
+                  <td className="timetable-td sticky-col font-bold day-cell" rowSpan={2}>{day}</td>
+                  <td className="timetable-td sticky-col-type type-label theory-label">THEORY</td>
+                  {TIME_HEADERS.map((time, idx) => {
                     if (time === 'LUNCH') {
                       return (
-                        <td key={`${day}-lunch`} className="timetable-td p-0">
+                        <td key={`${day}-theory-lunch`} className="timetable-td p-0">
                           <SlotCell slotCode={null} type="theory" isLunch />
                         </td>
                       );
                     }
-                    const slotCode = TIMETABLE_STRUCTURE[day].theory[idx > 5 ? idx - 1 : idx];
+                    const slotCode = getTheorySlot(day, idx);
                     return (
                       <td key={`${day}-theory-${idx}`} className="timetable-td p-0">
                         <SlotCell
@@ -53,44 +126,34 @@ export function TimetableGrid({ assignments, onSlotClick }: TimetableGridProps) 
                     );
                   })}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Lab Section */}
-      <div>
-        <div className="section-label">Lab Slots</div>
-        <div className="overflow-x-auto">
-          <table className="timetable-table">
-            <thead>
-              <tr>
-                <th className="timetable-th sticky-col">Day</th>
-                {LAB_TIMES.map((time) => (
-                  <th key={time} className="timetable-th text-xs">{time}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {DAYS.map((day) => (
-                <tr key={day}>
-                  <td className="timetable-td sticky-col font-bold">{day}</td>
-                  {TIMETABLE_STRUCTURE[day].lab.map((slotCode, idx) => (
-                    <td key={`${day}-lab-${idx}`} className="timetable-td p-0">
-                      <SlotCell
-                        slotCode={slotCode}
-                        assignment={slotCode ? assignments[slotCode] : undefined}
-                        type="lab"
-                        onClick={slotCode ? () => onSlotClick(slotCode, 'lab') : undefined}
-                      />
-                    </td>
-                  ))}
+                {/* Lab row */}
+                <tr key={`${day}-lab`} className="lab-row">
+                  <td className="timetable-td sticky-col-type type-label lab-label">LAB</td>
+                  {TIME_HEADERS.map((time, idx) => {
+                    if (time === 'LUNCH') {
+                      return (
+                        <td key={`${day}-lab-lunch`} className="timetable-td p-0">
+                          <SlotCell slotCode={null} type="lab" isLunch />
+                        </td>
+                      );
+                    }
+                    const slotCode = getLabSlot(day, idx);
+                    return (
+                      <td key={`${day}-lab-${idx}`} className="timetable-td p-0">
+                        <SlotCell
+                          slotCode={slotCode}
+                          assignment={slotCode ? assignments[slotCode] : undefined}
+                          type="lab"
+                          onClick={slotCode ? () => onSlotClick(slotCode, 'lab') : undefined}
+                        />
+                      </td>
+                    );
+                  })}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
