@@ -161,8 +161,13 @@
   }
 
   .timetable-th {
-    @apply px-2 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/50 border;
-    min-width: 70px;
+    @apply px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/50 border;
+    min-width: 55px;
+  }
+
+  .timetable-th.time-header {
+    @apply text-[9px] whitespace-nowrap;
+    min-width: 50px;
   }
 
   .timetable-td {
@@ -170,7 +175,42 @@
   }
 
   .sticky-col {
-    @apply sticky left-0 z-10 bg-card;
+    @apply sticky left-0 z-20 bg-card;
+    min-width: 45px;
+  }
+
+  .sticky-col-type {
+    @apply sticky left-[45px] z-10 bg-card;
+    min-width: 60px;
+  }
+
+  .type-label {
+    @apply text-[10px] font-bold;
+  }
+
+  .theory-label {
+    @apply bg-[hsl(var(--theory-light))] text-[hsl(var(--theory))];
+  }
+
+  .lab-label {
+    @apply bg-[hsl(var(--lab-light))] text-[hsl(var(--lab))];
+  }
+
+  .day-cell {
+    @apply bg-muted/70;
+  }
+
+  /* Unified grid */
+  .unified-grid {
+    @apply text-xs;
+  }
+
+  .theory-row td:first-child {
+    border-bottom: none;
+  }
+
+  .lab-row {
+    border-bottom: 2px solid hsl(var(--border));
   }
 
   /* Section Labels */
@@ -180,7 +220,7 @@
 
   /* Slot Cell Styles */
   .slot-cell {
-    @apply min-w-[70px] h-14 flex items-center justify-center text-center transition-all duration-200 rounded-sm;
+    @apply min-w-[50px] h-12 flex items-center justify-center text-center transition-all duration-200 rounded-sm;
   }
 
   .slot-theory {
