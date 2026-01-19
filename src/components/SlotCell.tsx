@@ -41,18 +41,23 @@ export function SlotCell({ slotCode, assignment, type, isLunch, isDisabled, onCl
       onClick={!isDisabled || isAssigned ? onClick : undefined}
     >
       {isAssigned ? (
-        <div className="flex flex-col items-center justify-center h-full p-0.5 text-white">
-          <span className="font-bold text-[9px] leading-tight truncate w-full text-center">
+        <div className="flex flex-col items-center justify-center h-full p-1 text-white">
+          <span className="slot-course-code font-bold text-xs leading-tight truncate w-full text-center drop-shadow-sm">
             {assignment.courseCode}
           </span>
-          <span className="text-[8px] leading-tight truncate w-full text-center opacity-90">
-            {assignment.professorName}
+          <span className="slot-detail text-[10px] leading-tight truncate w-full text-center opacity-90">
+            {slotCode}
           </span>
+          {assignment.professorName && (
+            <span className="slot-detail text-[9px] leading-tight truncate w-full text-center opacity-80 mt-0.5">
+              {assignment.professorName}
+            </span>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-full">
           <span className={cn(
-            "text-[10px] font-medium",
+            "text-xs font-medium",
             isDisabled ? "text-muted-foreground/40 line-through" : "text-muted-foreground"
           )}>{slotCode}</span>
         </div>

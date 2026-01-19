@@ -3,7 +3,7 @@ import { TimetableGrid } from '@/components/TimetableGrid';
 import { Sidebar } from '@/components/Sidebar';
 import { AssignSlotDialog } from '@/components/AssignSlotDialog';
 import { useTimetable } from '@/hooks/useTimetable';
-import { exportToPNG, exportToPDF, exportToJSON, importFromJSON } from '@/utils/export';
+import { exportToPNG, exportToPDF } from '@/utils/export';
 import { toast } from '@/hooks/use-toast';
 import { getRelatedSlotCodes } from '@/types/timetable';
 
@@ -17,8 +17,6 @@ const Index = () => {
     getAssignment,
     getSlotClashes,
     isSlotClashing,
-    exportData,
-    importData,
   } = useTimetable();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -77,33 +75,6 @@ const Index = () => {
     });
   };
 
-  const handleExportJSON = () => {
-    exportToJSON({ assignments, courses });
-    toast({
-      title: 'Timetable Saved',
-      description: 'Your timetable data has been downloaded as JSON',
-    });
-  };
-
-  const handleImportJSON = async () => {
-    const jsonString = await importFromJSON();
-    if (jsonString) {
-      const success = importData(jsonString);
-      if (success) {
-        toast({
-          title: 'Timetable Loaded',
-          description: 'Your timetable has been restored',
-        });
-      } else {
-        toast({
-          title: 'Import Failed',
-          description: 'Invalid timetable file',
-          variant: 'destructive',
-        });
-      }
-    }
-  };
-
   return (
     <div className="app-layout">
       <Sidebar
@@ -112,8 +83,6 @@ const Index = () => {
         onClearAll={handleClearAll}
         onExportPNG={handleExportPNG}
         onExportPDF={handleExportPDF}
-        onExportJSON={handleExportJSON}
-        onImportJSON={handleImportJSON}
       />
       
       <main className="main-content">

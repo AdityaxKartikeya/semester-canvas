@@ -241,7 +241,7 @@
 
   /* Slot Cell Styles */
   .slot-cell {
-    @apply min-w-[50px] h-12 flex items-center justify-center text-center transition-all duration-200 rounded-sm;
+    @apply min-w-[60px] h-14 flex items-center justify-center text-center transition-all duration-200 rounded-sm;
   }
 
   .slot-theory {
@@ -319,6 +319,31 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/30;
+}
+
+/* Export Styles - for better PNG/PDF quality */
+.exporting {
+  padding: 24px !important;
+}
+
+.exporting .slot-cell {
+  min-width: 70px !important;
+  height: 50px !important;
+}
+
+.exporting .timetable-th {
+  padding: 8px 6px !important;
+  font-size: 11px !important;
+}
+
+/* Only show course code in export, hide details */
+.exporting .slot-detail {
+  display: none !important;
+}
+
+.exporting .slot-course-code {
+  font-size: 14px !important;
+  font-weight: 700 !important;
 }
 
 /* Print Styles */

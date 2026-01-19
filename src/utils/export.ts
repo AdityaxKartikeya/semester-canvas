@@ -9,12 +9,17 @@ export async function exportToPNG(elementId: string, filename: string = 'ffcs-ti
   }
 
   try {
+    // Add export class for better styling during capture
+    element.classList.add('exporting');
+    
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
-      scale: 2,
+      scale: 3,
       useCORS: true,
       logging: false,
     });
+    
+    element.classList.remove('exporting');
 
     const link = document.createElement('a');
     link.download = filename;
@@ -33,12 +38,17 @@ export async function exportToPDF(elementId: string, filename: string = 'ffcs-ti
   }
 
   try {
+    // Add export class for better styling during capture
+    element.classList.add('exporting');
+    
     const canvas = await html2canvas(element, {
       backgroundColor: '#ffffff',
-      scale: 2,
+      scale: 3,
       useCORS: true,
       logging: false,
     });
+    
+    element.classList.remove('exporting');
 
     const imgData = canvas.toDataURL('image/png');
     const imgWidth = canvas.width;
