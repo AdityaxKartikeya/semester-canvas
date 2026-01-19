@@ -6,27 +6,24 @@ interface TimetableGridProps {
   onSlotClick: (slotCode: string, type: 'theory' | 'lab') => void;
 }
 
-// Time column headers matching the official timetable
+// Compact time headers - only columns that have slots
 const TIME_HEADERS = [
-  '08:00', '09:00', '09:01', '10:00', '10:01', '11:00', '11:01', 
-  '12:00', '12:01', '13:00', 'LUNCH', '14:00', '14:01', '15:00', 
-  '15:01', '16:00', '16:01', '17:00', '17:01', '18:00'
+  '08:00', '09:00', '10:00', '10:01', '11:00', '11:01', 
+  '12:00', '12:01', '13:00', 'LUNCH', '14:00', '14:01', 
+  '15:00', '15:01', '16:00', '16:01', '17:00', '17:01', '18:00'
 ];
 
-// Map column indices to theory slot indices in TIMETABLE_STRUCTURE
-// Theory has 11 slots: indices 0-4 (morning), null for lunch, 6-10 (afternoon)
-// Columns 0,1,3,5,7,9 are main theory slots, others are subdivisions or empty
-const THEORY_COL_TO_SLOT: (number | null)[] = [
+// Theory slot mapping (11 theory slots per day in TIMETABLE_STRUCTURE)
+const THEORY_COL_MAP: (number | null)[] = [
   0,    // 08:00 -> theory[0]
   1,    // 09:00 -> theory[1]
-  null, // 09:01 -> no theory
   2,    // 10:00 -> theory[2]
-  3,    // 10:01 -> theory[3] (for double slots like E1)
+  3,    // 10:01 -> theory[3]
   4,    // 11:00 -> theory[4]
   null, // 11:01 -> no theory
-  null, // 12:00 -> theory[5] is null (lunch transition)
+  null, // 12:00 -> no theory
   null, // 12:01 -> no theory
-  null, // 13:00 -> no theory (some days have null here)
+  null, // 13:00 -> no theory
   null, // LUNCH
   6,    // 14:00 -> theory[6]
   7,    // 14:01 -> theory[7]
@@ -39,12 +36,10 @@ const THEORY_COL_TO_SLOT: (number | null)[] = [
   null, // 18:00 -> no theory
 ];
 
-// Map column indices to lab slot indices in TIMETABLE_STRUCTURE
-// Labs have 12 slots per day: 6 morning (0-5) + 6 afternoon (6-11)
-const LAB_COL_TO_SLOT: (number | null)[] = [
+// Lab slot mapping (12 lab slots per day in TIMETABLE_STRUCTURE)
+const LAB_COL_MAP: (number | null)[] = [
   0,    // 08:00 -> lab[0]
   1,    // 09:00 -> lab[1]
-  null, // 09:01 -> no lab
   2,    // 10:00 -> lab[2]
   3,    // 10:01 -> lab[3]
   4,    // 11:00 -> lab[4]
@@ -66,13 +61,13 @@ const LAB_COL_TO_SLOT: (number | null)[] = [
 
 export function TimetableGrid({ assignments, onSlotClick }: TimetableGridProps) {
   const getTheorySlot = (day: Day, colIndex: number): string | null => {
-    const slotIdx = THEORY_COL_TO_SLOT[colIndex];
+    const slotIdx = THEORY_COL_MAP[colIndex];
     if (slotIdx === null || slotIdx === undefined) return null;
     return TIMETABLE_STRUCTURE[day].theory[slotIdx] || null;
   };
 
   const getLabSlot = (day: Day, colIndex: number): string | null => {
-    const slotIdx = LAB_COL_TO_SLOT[colIndex];
+    const slotIdx = LAB_COL_MAP[colIndex];
     if (slotIdx === null || slotIdx === undefined) return null;
     return TIMETABLE_STRUCTURE[day].lab[slotIdx] || null;
   };
@@ -84,7 +79,6 @@ export function TimetableGrid({ assignments, onSlotClick }: TimetableGridProps) 
         <p className="text-sm text-muted-foreground mt-1">Click any slot to assign a course</p>
       </div>
       
-      {/* Unified Timetable */}
       <div className="overflow-x-auto">
         <table className="timetable-table unified-grid">
           <thead>
@@ -101,7 +95,6 @@ export function TimetableGrid({ assignments, onSlotClick }: TimetableGridProps) 
           <tbody>
             {DAYS.map((day) => (
               <>
-                {/* Theory row */}
                 <tr key={`${day}-theory`} className="theory-row">
                   <td className="timetable-td sticky-col font-bold day-cell" rowSpan={2}>{day}</td>
                   <td className="timetable-td sticky-col-type type-label theory-label">THEORY</td>
@@ -126,7 +119,6 @@ export function TimetableGrid({ assignments, onSlotClick }: TimetableGridProps) 
                     );
                   })}
                 </tr>
-                {/* Lab row */}
                 <tr key={`${day}-lab`} className="lab-row">
                   <td className="timetable-td sticky-col-type type-label lab-label">LAB</td>
                   {TIME_HEADERS.map((time, idx) => {
