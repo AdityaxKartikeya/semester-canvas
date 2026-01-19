@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { SlotAssignment, SLOT_COLORS } from '@/types/timetable';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { SlotAssignment, SLOT_COLORS, findClashingSlots, getRelatedSlotCodes, findAllClashingSlotCodes } from '@/types/timetable';
 
 const STORAGE_KEY = 'ffcs-timetable-data';
 
@@ -36,6 +36,12 @@ export function useTimetable() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data]);
 
+  // Get all clashing slot codes for disabling in UI
+  const clashingSlotCodes = useMemo(() => {
+    const assignedSlots = Object.keys(data.assignments);
+    return findAllClashingSlotCodes(assignedSlots);
+  }, [data.assignments]);
+
   const assignSlot = useCallback((
     slotCode: string,
     courseCode: string,
@@ -43,6 +49,9 @@ export function useTimetable() {
     professorName: string,
     colorTag?: string
   ) => {
+    // Get all related slots (e.g., for A1, get A1/SE2, A1/SF2, A1/SB2, etc.)
+    const relatedSlots = getRelatedSlotCodes(slotCode);
+    
     setData(prev => {
       // Find if this course already exists
       let course = prev.courses.find(c => c.code === courseCode);
@@ -59,7 +68,7 @@ export function useTimetable() {
           code: courseCode,
           professor: professorName,
           color,
-          slots: [slotCode],
+          slots: relatedSlots,
         };
         courses.push(course);
       } else {
@@ -67,39 +76,48 @@ export function useTimetable() {
         color = course.color;
         courses = courses.map(c => 
           c.code === courseCode 
-            ? { ...c, slots: [...new Set([...c.slots, slotCode])] }
+            ? { ...c, slots: [...new Set([...c.slots, ...relatedSlots])] }
             : c
         );
+      }
+
+      // Create assignments for all related slots
+      const newAssignments = { ...prev.assignments };
+      for (const slot of relatedSlots) {
+        newAssignments[slot] = {
+          courseCode,
+          courseName,
+          professorName,
+          colorTag: color!,
+        };
       }
 
       return {
         ...prev,
         courses,
-        assignments: {
-          ...prev.assignments,
-          [slotCode]: {
-            courseCode,
-            courseName,
-            professorName,
-            colorTag: color!,
-          },
-        },
+        assignments: newAssignments,
       };
     });
   }, [nextColorIndex]);
 
   const clearSlot = useCallback((slotCode: string) => {
+    // Get all related slots to clear them all
+    const relatedSlots = getRelatedSlotCodes(slotCode);
+    
     setData(prev => {
       const assignment = prev.assignments[slotCode];
       if (!assignment) return prev;
 
       const newAssignments = { ...prev.assignments };
-      delete newAssignments[slotCode];
+      // Delete all related slots
+      for (const slot of relatedSlots) {
+        delete newAssignments[slot];
+      }
 
       // Update course slots
       const courses = prev.courses.map(c => {
         if (c.code === assignment.courseCode) {
-          return { ...c, slots: c.slots.filter(s => s !== slotCode) };
+          return { ...c, slots: c.slots.filter(s => !relatedSlots.includes(s)) };
         }
         return c;
       }).filter(c => c.slots.length > 0);
@@ -113,14 +131,23 @@ export function useTimetable() {
     setNextColorIndex(0);
   }, []);
 
+  // Check for clashing slots based on time overlap (theory and lab)
   const getSlotClashes = useCallback((slotCode: string): string[] => {
-    // Find all occurrences of this slot code in the timetable
-    // If already assigned, it's a clash
+    const assignedSlots = Object.keys(data.assignments);
+    
+    // If this slot is already assigned, it's a clash with itself
     if (data.assignments[slotCode]) {
       return [slotCode];
     }
-    return [];
+    
+    // Find time-based clashes with other assigned slots
+    return findClashingSlots(slotCode, assignedSlots);
   }, [data.assignments]);
+
+  // Check if a specific slot is clashing (for disabling in UI)
+  const isSlotClashing = useCallback((slotCode: string): boolean => {
+    return clashingSlotCodes.has(slotCode);
+  }, [clashingSlotCodes]);
 
   const isSlotAssigned = useCallback((slotCode: string): boolean => {
     return !!data.assignments[slotCode];
@@ -152,6 +179,7 @@ export function useTimetable() {
     clearSlot,
     clearAll,
     getSlotClashes,
+    isSlotClashing,
     isSlotAssigned,
     getAssignment,
     exportData,

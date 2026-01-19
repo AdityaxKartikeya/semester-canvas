@@ -38,7 +38,7 @@ export function Sidebar({
     <aside className="sidebar">
       <div className="sidebar-header">
         <h1 className="text-lg font-bold text-primary">FFCS Builder</h1>
-        <p className="text-xs text-muted-foreground">Winter 2025-26</p>
+        <p className="text-xs text-muted-foreground">Freshers Winter 2025-26</p>
       </div>
 
       <ScrollArea className="flex-1 px-4">

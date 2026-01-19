@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SLOT_COLORS, SlotAssignment } from '@/types/timetable';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, Info } from 'lucide-react';
+import { SLOT_COLORS, SlotAssignment, getRelatedSlotCodes } from '@/types/timetable';
 
 interface AssignSlotDialogProps {
   open: boolean;
@@ -18,6 +20,7 @@ interface AssignSlotDialogProps {
   slotType: 'theory' | 'lab';
   existingAssignment?: SlotAssignment;
   existingCourses: Array<{ code: string; name: string; professor: string; color: string }>;
+  clashingSlots: string[];
   onAssign: (courseCode: string, courseName: string, professorName: string, color?: string) => void;
   onClear: () => void;
 }
@@ -29,34 +32,40 @@ export function AssignSlotDialog({
   slotType,
   existingAssignment,
   existingCourses,
+  clashingSlots,
   onAssign,
   onClear,
 }: AssignSlotDialogProps) {
-  const [courseCode, setCourseCode] = useState(existingAssignment?.courseCode || '');
-  const [courseName, setCourseName] = useState(existingAssignment?.courseName || '');
-  const [professorName, setProfessorName] = useState(existingAssignment?.professorName || '');
-  const [selectedColor, setSelectedColor] = useState(existingAssignment?.colorTag || SLOT_COLORS[0]);
+  const [courseCode, setCourseCode] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [professorName, setProfessorName] = useState('');
+  const [selectedColor, setSelectedColor] = useState(SLOT_COLORS[0]);
+
+  // Get all related slots that will be assigned
+  const relatedSlots = getRelatedSlotCodes(slotCode);
+  const hasClash = clashingSlots.length > 0;
+
+  // Reset form when dialog opens or slot changes
+  useEffect(() => {
+    if (open) {
+      setCourseCode(existingAssignment?.courseCode || '');
+      setCourseName(existingAssignment?.courseName || '');
+      setProfessorName(existingAssignment?.professorName || '');
+      setSelectedColor(existingAssignment?.colorTag || SLOT_COLORS[0]);
+    }
+  }, [open, slotCode, existingAssignment]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (courseCode.trim() && courseName.trim()) {
       onAssign(courseCode.trim(), courseName.trim(), professorName.trim(), selectedColor);
       onOpenChange(false);
-      resetForm();
     }
   };
 
   const handleClear = () => {
     onClear();
     onOpenChange(false);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setCourseCode('');
-    setCourseName('');
-    setProfessorName('');
-    setSelectedColor(SLOT_COLORS[0]);
   };
 
   const handleSelectExisting = (course: typeof existingCourses[0]) => {
@@ -77,6 +86,27 @@ export function AssignSlotDialog({
             Assign Slot: {slotCode}
           </DialogTitle>
         </DialogHeader>
+        
+        {/* Related Slots Info */}
+        {!existingAssignment && relatedSlots.length > 1 && (
+          <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>Will assign {relatedSlots.length} slots:</strong>{' '}
+              {relatedSlots.join(', ')}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {/* Clash Warning */}
+        {hasClash && !existingAssignment && (
+          <Alert variant="destructive" className="border-red-500 bg-red-50 dark:bg-red-950">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              <strong>Time Clash Detected!</strong> This slot conflicts with: {clashingSlots.join(', ')}
+            </AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {existingCourses.length > 0 && (

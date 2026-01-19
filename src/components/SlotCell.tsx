@@ -6,10 +6,11 @@ interface SlotCellProps {
   assignment?: SlotAssignment;
   type: 'theory' | 'lab';
   isLunch?: boolean;
+  isDisabled?: boolean;
   onClick?: () => void;
 }
 
-export function SlotCell({ slotCode, assignment, type, isLunch, onClick }: SlotCellProps) {
+export function SlotCell({ slotCode, assignment, type, isLunch, isDisabled, onClick }: SlotCellProps) {
   if (isLunch) {
     return (
       <div className="slot-cell slot-lunch flex items-center justify-center">
@@ -27,15 +28,17 @@ export function SlotCell({ slotCode, assignment, type, isLunch, onClick }: SlotC
   return (
     <div
       className={cn(
-        'slot-cell cursor-pointer transition-all duration-200',
+        'slot-cell transition-all duration-200',
         type === 'theory' ? 'slot-theory' : 'slot-lab',
-        isAssigned && 'slot-assigned'
+        isAssigned && 'slot-assigned',
+        isDisabled && !isAssigned && 'slot-disabled',
+        !isDisabled && !isAssigned && 'cursor-pointer'
       )}
       style={isAssigned ? { 
         backgroundColor: assignment.colorTag,
         borderColor: assignment.colorTag,
       } : undefined}
-      onClick={onClick}
+      onClick={!isDisabled || isAssigned ? onClick : undefined}
     >
       {isAssigned ? (
         <div className="flex flex-col items-center justify-center h-full p-0.5 text-white">
@@ -48,7 +51,10 @@ export function SlotCell({ slotCode, assignment, type, isLunch, onClick }: SlotC
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-full">
-          <span className="text-[10px] font-medium text-muted-foreground">{slotCode}</span>
+          <span className={cn(
+            "text-[10px] font-medium",
+            isDisabled ? "text-muted-foreground/40 line-through" : "text-muted-foreground"
+          )}>{slotCode}</span>
         </div>
       )}
     </div>

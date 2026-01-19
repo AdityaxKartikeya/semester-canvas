@@ -5,6 +5,7 @@ import { AssignSlotDialog } from '@/components/AssignSlotDialog';
 import { useTimetable } from '@/hooks/useTimetable';
 import { exportToPNG, exportToPDF, exportToJSON, importFromJSON } from '@/utils/export';
 import { toast } from '@/hooks/use-toast';
+import { getRelatedSlotCodes } from '@/types/timetable';
 
 const Index = () => {
   const {
@@ -14,6 +15,8 @@ const Index = () => {
     clearSlot,
     clearAll,
     getAssignment,
+    getSlotClashes,
+    isSlotClashing,
     exportData,
     importData,
   } = useTimetable();
@@ -28,20 +31,22 @@ const Index = () => {
 
   const handleAssign = (courseCode: string, courseName: string, professorName: string, color?: string) => {
     if (selectedSlot) {
+      const relatedSlots = getRelatedSlotCodes(selectedSlot.code);
       assignSlot(selectedSlot.code, courseCode, courseName, professorName, color);
       toast({
-        title: 'Slot Assigned',
-        description: `${courseCode} assigned to ${selectedSlot.code}`,
+        title: 'Slots Assigned',
+        description: `${courseCode} assigned to ${relatedSlots.length} slot${relatedSlots.length > 1 ? 's' : ''}: ${relatedSlots.join(', ')}`,
       });
     }
   };
 
   const handleClearSlot = () => {
     if (selectedSlot) {
+      const relatedSlots = getRelatedSlotCodes(selectedSlot.code);
       clearSlot(selectedSlot.code);
       toast({
-        title: 'Slot Cleared',
-        description: `${selectedSlot.code} has been cleared`,
+        title: 'Slots Cleared',
+        description: `${relatedSlots.length} slot${relatedSlots.length > 1 ? 's' : ''} cleared: ${relatedSlots.join(', ')}`,
       });
     }
   };
@@ -114,6 +119,7 @@ const Index = () => {
       <main className="main-content">
         <TimetableGrid
           assignments={assignments}
+          isSlotClashing={isSlotClashing}
           onSlotClick={handleSlotClick}
         />
       </main>
@@ -126,6 +132,7 @@ const Index = () => {
           slotType={selectedSlot.type}
           existingAssignment={getAssignment(selectedSlot.code)}
           existingCourses={courses}
+          clashingSlots={getSlotClashes(selectedSlot.code)}
           onAssign={handleAssign}
           onClear={handleClearSlot}
         />

@@ -1,148 +1,149 @@
+import React from 'react';
 import { SlotCell } from './SlotCell';
-import { DAYS, TIMETABLE_STRUCTURE, SlotAssignment, Day } from '@/types/timetable';
+import { DAYS, TIMETABLE_STRUCTURE, THEORY_TIMES, LAB_TIMES, SlotAssignment, Day } from '@/types/timetable';
 
 interface TimetableGridProps {
   assignments: Record<string, SlotAssignment>;
+  isSlotClashing: (slotCode: string) => boolean;
   onSlotClick: (slotCode: string, type: 'theory' | 'lab') => void;
 }
 
-// Compact time headers - only columns that have slots
-const TIME_HEADERS = [
-  '08:00', '09:00', '10:00', '10:01', '11:00', '11:01', 
-  '12:00', '12:01', '13:00', 'LUNCH', '14:00', '14:01', 
-  '15:00', '15:01', '16:00', '16:01', '17:00', '17:01', '18:00'
-];
+export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: TimetableGridProps) {
+  // Theory: 5 morning + LUNCH + 5 afternoon
+  const theoryMorning = THEORY_TIMES.slice(0, 5);
+  const theoryAfternoon = THEORY_TIMES.slice(6); // Skip LUNCH at index 5
+  // Lab: 3 morning + LUNCH + 3 afternoon (combined slots)
+  const labMorning = LAB_TIMES.slice(0, 3);
+  const labAfternoon = LAB_TIMES.slice(4); // Skip LUNCH at index 3
 
-// Theory slot mapping (11 theory slots per day in TIMETABLE_STRUCTURE)
-const THEORY_COL_MAP: (number | null)[] = [
-  0,    // 08:00 -> theory[0]
-  1,    // 09:00 -> theory[1]
-  2,    // 10:00 -> theory[2]
-  3,    // 10:01 -> theory[3]
-  4,    // 11:00 -> theory[4]
-  null, // 11:01 -> no theory
-  null, // 12:00 -> no theory
-  null, // 12:01 -> no theory
-  null, // 13:00 -> no theory
-  null, // LUNCH
-  6,    // 14:00 -> theory[6]
-  7,    // 14:01 -> theory[7]
-  8,    // 15:00 -> theory[8]
-  9,    // 15:01 -> theory[9]
-  10,   // 16:00 -> theory[10]
-  null, // 16:01 -> no theory
-  null, // 17:00 -> no theory
-  null, // 17:01 -> no theory
-  null, // 18:00 -> no theory
-];
-
-// Lab slot mapping (12 lab slots per day in TIMETABLE_STRUCTURE)
-const LAB_COL_MAP: (number | null)[] = [
-  0,    // 08:00 -> lab[0]
-  1,    // 09:00 -> lab[1]
-  2,    // 10:00 -> lab[2]
-  3,    // 10:01 -> lab[3]
-  4,    // 11:00 -> lab[4]
-  5,    // 11:01 -> lab[5]
-  null, // 12:00 -> no lab
-  null, // 12:01 -> no lab
-  null, // 13:00 -> no lab
-  null, // LUNCH
-  6,    // 14:00 -> lab[6]
-  7,    // 14:01 -> lab[7]
-  8,    // 15:00 -> lab[8]
-  9,    // 15:01 -> lab[9]
-  10,   // 16:00 -> lab[10]
-  11,   // 16:01 -> lab[11]
-  null, // 17:00 -> no lab
-  null, // 17:01 -> no lab
-  null, // 18:00 -> no lab
-];
-
-export function TimetableGrid({ assignments, onSlotClick }: TimetableGridProps) {
-  const getTheorySlot = (day: Day, colIndex: number): string | null => {
-    const slotIdx = THEORY_COL_MAP[colIndex];
-    if (slotIdx === null || slotIdx === undefined) return null;
-    return TIMETABLE_STRUCTURE[day].theory[slotIdx] || null;
+  const getTheorySlot = (day: Day, index: number): string | null => {
+    return TIMETABLE_STRUCTURE[day].theory[index] || null;
   };
 
-  const getLabSlot = (day: Day, colIndex: number): string | null => {
-    const slotIdx = LAB_COL_MAP[colIndex];
-    if (slotIdx === null || slotIdx === undefined) return null;
-    return TIMETABLE_STRUCTURE[day].lab[slotIdx] || null;
+  const getLabSlot = (day: Day, index: number): string | null => {
+    return TIMETABLE_STRUCTURE[day].lab[index] || null;
   };
 
   return (
     <div className="timetable-container" id="timetable-export">
       <div className="timetable-header">
-        <h2 className="text-xl font-bold text-primary">FFCS Timetable - Winter Semester 2025-26</h2>
+        <h2 className="text-xl font-bold text-primary">Freshers Winter Semester 2025-26 Slot Timetable</h2>
         <p className="text-sm text-muted-foreground mt-1">Click any slot to assign a course</p>
       </div>
       
       <div className="overflow-x-auto">
-        <table className="timetable-table unified-grid">
+        <table className="timetable-table">
           <thead>
-            <tr>
-              <th className="timetable-th sticky-col">Day</th>
-              <th className="timetable-th sticky-col-type">Type</th>
-              {TIME_HEADERS.map((time, idx) => (
-                <th key={`time-${idx}`} className="timetable-th time-header">
-                  {time === 'LUNCH' ? '🍽️' : time}
+            {/* Theory Hours Header */}
+            <tr className="theory-hours-header">
+              <th className="timetable-th sticky-col" rowSpan={2}>Day</th>
+              <th className="timetable-th" rowSpan={2}>Type</th>
+              {theoryMorning.map((time, idx) => (
+                <th key={`theory-am-${idx}`} className="timetable-th time-header theory-time">
+                  {time}
+                </th>
+              ))}
+              <th className="timetable-th lunch-header" rowSpan={2}>
+                <div className="lunch-vertical">LUNCH</div>
+              </th>
+              {theoryAfternoon.map((time, idx) => (
+                <th key={`theory-pm-${idx}`} className="timetable-th time-header theory-time">
+                  {time}
+                </th>
+              ))}
+            </tr>
+            {/* Lab Hours Header */}
+            <tr className="lab-hours-header">
+              {labMorning.map((time, idx) => (
+                <th key={`lab-am-${idx}`} className="timetable-th time-header lab-time" colSpan={idx === 2 ? 1 : 2}>
+                  {time}
+                </th>
+              ))}
+              {labAfternoon.map((time, idx) => (
+                <th key={`lab-pm-${idx}`} className="timetable-th time-header lab-time" colSpan={idx === 0 ? 1 : 2}>
+                  {time}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {DAYS.map((day) => (
-              <>
-                <tr key={`${day}-theory`} className="theory-row">
+              <React.Fragment key={day}>
+                {/* Theory Row */}
+                <tr className="theory-row">
                   <td className="timetable-td sticky-col font-bold day-cell" rowSpan={2}>{day}</td>
-                  <td className="timetable-td sticky-col-type type-label theory-label">THEORY</td>
-                  {TIME_HEADERS.map((time, idx) => {
-                    if (time === 'LUNCH') {
-                      return (
-                        <td key={`${day}-theory-lunch`} className="timetable-td p-0">
-                          <SlotCell slotCode={null} type="theory" isLunch />
-                        </td>
-                      );
-                    }
+                  <td className="timetable-td type-label theory-label">Theory</td>
+                  {/* Morning theory slots (5 slots) */}
+                  {[0, 1, 2, 3, 4].map((idx) => {
                     const slotCode = getTheorySlot(day, idx);
                     return (
-                      <td key={`${day}-theory-${idx}`} className="timetable-td p-0">
+                      <td key={`${day}-theory-am-${idx}`} className="timetable-td p-0">
                         <SlotCell
                           slotCode={slotCode}
                           assignment={slotCode ? assignments[slotCode] : undefined}
                           type="theory"
+                          isDisabled={slotCode ? isSlotClashing(slotCode) : false}
+                          onClick={slotCode ? () => onSlotClick(slotCode, 'theory') : undefined}
+                        />
+                      </td>
+                    );
+                  })}
+                  {/* Lunch - spans 2 rows */}
+                  <td className="timetable-td p-0 lunch-cell" rowSpan={2}>
+                    <SlotCell slotCode={null} type="theory" isLunch />
+                  </td>
+                  {/* Afternoon theory slots (5 slots) */}
+                  {[5, 6, 7, 8, 9].map((idx) => {
+                    const slotCode = getTheorySlot(day, idx);
+                    return (
+                      <td key={`${day}-theory-pm-${idx}`} className="timetable-td p-0">
+                        <SlotCell
+                          slotCode={slotCode}
+                          assignment={slotCode ? assignments[slotCode] : undefined}
+                          type="theory"
+                          isDisabled={slotCode ? isSlotClashing(slotCode) : false}
                           onClick={slotCode ? () => onSlotClick(slotCode, 'theory') : undefined}
                         />
                       </td>
                     );
                   })}
                 </tr>
-                <tr key={`${day}-lab`} className="lab-row">
-                  <td className="timetable-td sticky-col-type type-label lab-label">LAB</td>
-                  {TIME_HEADERS.map((time, idx) => {
-                    if (time === 'LUNCH') {
-                      return (
-                        <td key={`${day}-lab-lunch`} className="timetable-td p-0">
-                          <SlotCell slotCode={null} type="lab" isLunch />
-                        </td>
-                      );
-                    }
+                {/* Lab Row */}
+                <tr className="lab-row">
+                  <td className="timetable-td type-label lab-label">Lab</td>
+                  {/* Morning lab slots (3 combined slots spanning 2 theory columns each, except last) */}
+                  {[0, 1, 2].map((idx) => {
                     const slotCode = getLabSlot(day, idx);
                     return (
-                      <td key={`${day}-lab-${idx}`} className="timetable-td p-0">
+                      <td key={`${day}-lab-am-${idx}`} className="timetable-td p-0" colSpan={idx === 2 ? 1 : 2}>
                         <SlotCell
                           slotCode={slotCode}
                           assignment={slotCode ? assignments[slotCode] : undefined}
                           type="lab"
+                          isDisabled={slotCode ? isSlotClashing(slotCode) : false}
+                          onClick={slotCode ? () => onSlotClick(slotCode, 'lab') : undefined}
+                        />
+                      </td>
+                    );
+                  })}
+                  {/* Lunch cell is spanned from theory row */}
+                  {/* Afternoon lab slots (3 combined slots) */}
+                  {[3, 4, 5].map((idx) => {
+                    const slotCode = getLabSlot(day, idx);
+                    return (
+                      <td key={`${day}-lab-pm-${idx}`} className="timetable-td p-0" colSpan={idx === 3 ? 1 : 2}>
+                        <SlotCell
+                          slotCode={slotCode}
+                          assignment={slotCode ? assignments[slotCode] : undefined}
+                          type="lab"
+                          isDisabled={slotCode ? isSlotClashing(slotCode) : false}
                           onClick={slotCode ? () => onSlotClick(slotCode, 'lab') : undefined}
                         />
                       </td>
                     );
                   })}
                 </tr>
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
