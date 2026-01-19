@@ -38,17 +38,17 @@ export function SlotCell({ slotCode, assignment, type, isLunch, onClick }: SlotC
       onClick={onClick}
     >
       {isAssigned ? (
-        <div className="flex flex-col items-center justify-center h-full p-1 text-white">
-          <span className="font-bold text-xs leading-tight truncate w-full text-center">
+        <div className="flex flex-col items-center justify-center h-full p-0.5 text-white">
+          <span className="font-bold text-[9px] leading-tight truncate w-full text-center">
             {assignment.courseCode}
           </span>
-          <span className="text-[10px] leading-tight truncate w-full text-center opacity-90">
+          <span className="text-[8px] leading-tight truncate w-full text-center opacity-90">
             {assignment.professorName}
           </span>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-full">
-          <span className="text-xs font-medium text-muted-foreground">{slotCode}</span>
+          <span className="text-[10px] font-medium text-muted-foreground">{slotCode}</span>
         </div>
       )}
     </div>
