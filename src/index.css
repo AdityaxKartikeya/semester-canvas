@@ -1,96 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Custom colors for FFCS */
+    --theory: 221 83% 53%;
+    --theory-light: 221 83% 97%;
+    --lab: 262 83% 58%;
+    --lab-light: 262 83% 97%;
+    --lunch: 45 93% 47%;
+    --lunch-light: 45 93% 95%;
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 6%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 262 83% 68%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+
+    --theory: 217 91% 60%;
+    --theory-light: 217 91% 15%;
+    --lab: 262 83% 68%;
+    --lab-light: 262 83% 15%;
+    --lunch: 45 93% 47%;
+    --lunch-light: 45 93% 12%;
+
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -101,5 +110,160 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  /* App Layout */
+  .app-layout {
+    @apply flex min-h-screen w-full;
+  }
+
+  .main-content {
+    @apply flex-1 overflow-auto p-6 bg-background;
+  }
+
+  /* Sidebar Styles */
+  .sidebar {
+    @apply w-72 border-r bg-card flex flex-col shrink-0;
+  }
+
+  .sidebar-header {
+    @apply p-4 border-b;
+  }
+
+  .sidebar-footer {
+    @apply p-4 border-t bg-muted/30;
+  }
+
+  .sidebar-section-title {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2;
+  }
+
+  /* Timetable Container */
+  .timetable-container {
+    @apply bg-card rounded-xl shadow-sm border p-6;
+  }
+
+  .timetable-header {
+    @apply mb-6 pb-4 border-b;
+  }
+
+  /* Timetable Table */
+  .timetable-table {
+    @apply w-full border-collapse;
+  }
+
+  .timetable-th {
+    @apply px-2 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/50 border;
+    min-width: 70px;
+  }
+
+  .timetable-td {
+    @apply border text-center align-middle;
+  }
+
+  .sticky-col {
+    @apply sticky left-0 z-10 bg-card;
+  }
+
+  /* Section Labels */
+  .section-label {
+    @apply inline-block px-3 py-1 mb-3 text-xs font-semibold rounded-full bg-primary/10 text-primary;
+  }
+
+  /* Slot Cell Styles */
+  .slot-cell {
+    @apply min-w-[70px] h-14 flex items-center justify-center text-center transition-all duration-200 rounded-sm;
+  }
+
+  .slot-theory {
+    @apply bg-[hsl(var(--theory-light))] hover:bg-[hsl(var(--theory))]/20 hover:shadow-md cursor-pointer;
+  }
+
+  .slot-lab {
+    @apply bg-[hsl(var(--lab-light))] hover:bg-[hsl(var(--lab))]/20 hover:shadow-md cursor-pointer;
+  }
+
+  .slot-lunch {
+    @apply bg-[hsl(var(--lunch-light))];
+  }
+
+  .slot-empty {
+    @apply bg-muted/30;
+  }
+
+  .slot-assigned {
+    @apply shadow-sm hover:shadow-lg hover:scale-[1.03] ring-2 ring-white/30;
+  }
+
+  /* Slot Badges */
+  .slot-badge {
+    @apply inline-block px-2 py-0.5 text-[10px] font-medium rounded-full;
+  }
+
+  .slot-badge-available {
+    @apply bg-primary/10 text-primary;
+  }
+
+  .slot-badge-lab {
+    @apply bg-accent/10 text-accent;
+  }
+
+  .slot-badge-assigned {
+    @apply bg-success/10 text-success;
+  }
+
+  /* Stats Cards */
+  .stat-card {
+    @apply p-3 rounded-lg bg-muted/50 text-center;
+  }
+
+  .stat-value {
+    @apply text-2xl font-bold text-primary;
+  }
+
+  .stat-label {
+    @apply text-xs text-muted-foreground;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/30;
+}
+
+/* Print Styles */
+@media print {
+  .sidebar {
+    display: none !important;
+  }
+  
+  .main-content {
+    padding: 0 !important;
+  }
+  
+  .timetable-container {
+    box-shadow: none !important;
+    border: none !important;
   }
 }
