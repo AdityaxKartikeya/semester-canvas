@@ -184,16 +184,31 @@
     min-width: 60px;
   }
 
+  .header-label {
+    @apply text-[10px] font-bold whitespace-nowrap;
+    min-width: 85px;
+  }
+
+  .day-type-cell {
+    @apply sticky left-0 z-20 bg-card;
+    min-width: 85px;
+    padding: 4px 8px;
+  }
+
+  .day-label {
+    @apply text-xs font-bold text-blue-600 dark:text-blue-400 block;
+  }
+
   .type-label {
     @apply text-[10px] font-bold;
   }
 
   .theory-label {
-    @apply bg-[hsl(var(--theory-light))] text-[hsl(var(--theory))];
+    @apply text-blue-600 dark:text-blue-400;
   }
 
   .lab-label {
-    @apply bg-[hsl(var(--lab-light))] text-[hsl(var(--lab))];
+    @apply text-red-600 dark:text-red-400;
   }
 
   .day-cell {
@@ -241,15 +256,15 @@
 
   /* Slot Cell Styles */
   .slot-cell {
-    @apply min-w-[60px] h-14 flex items-center justify-center text-center transition-all duration-200 rounded-sm;
+    @apply min-w-[50px] h-12 flex items-center justify-center text-center transition-all duration-200 rounded-sm;
   }
 
   .slot-theory {
-    @apply bg-[hsl(var(--theory-light))] hover:bg-[hsl(var(--theory))]/20 hover:shadow-md cursor-pointer;
+    @apply bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900 hover:shadow-md cursor-pointer;
   }
 
   .slot-lab {
-    @apply bg-[hsl(var(--lab-light))] hover:bg-[hsl(var(--lab))]/20 hover:shadow-md cursor-pointer;
+    @apply bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900 hover:shadow-md cursor-pointer;
   }
 
   .slot-lunch {

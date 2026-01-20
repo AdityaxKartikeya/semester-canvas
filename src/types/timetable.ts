@@ -29,30 +29,30 @@ export interface Course {
 export const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const;
 export type Day = typeof DAYS[number];
 
-// Theory: 5 morning slots + LUNCH + 5 afternoon slots (TUE-FRI have 10 slots, MON has 8, SAT has 8)
+// Theory: 5 morning slots + LUNCH + 5 afternoon slots
 export const THEORY_TIMES = [
-  '8:00-8:50',
-  '9:00-9:50',
-  '10:00-10:50',
-  '11:00-11:50',
-  '12:00-12:50',
+  '8.00-8.50',
+  '9.00-9.50',
+  '10.00-10.50',
+  '11.00-11.50',
+  '12.00-12.50',
   'LUNCH',
-  '2:00-2:50',
-  '3:00-3:50',
-  '4:00-4:50',
-  '5:00-5:50',
-  '6:00-6:50',
+  '2.00-2.50',
+  '3.00-3.50',
+  '4.00-4.50',
+  '5.00-5.50',
+  '6.00-6.50',
 ] as const;
 
 // Lab: 3 morning + 3 afternoon = 6 combined slots per day (labs are conducted in pairs)
 export const LAB_TIMES = [
-  '8:00-9:40',
-  '9:50-11:30',
-  '11:40-1:10',
+  '8.00-9.40',
+  '9.50-11.30',
+  '11.40-1.10',
   'LUNCH',
-  '2:00-3:40',
-  '3:50-5:30',
-  '5:40-7:10',
+  '2.00-3.40',
+  '3.50-5.30',
+  '5.40-7.10',
 ] as const;
 
 export const SLOT_COLORS = [
@@ -69,11 +69,11 @@ export const SLOT_COLORS = [
 ] as const;
 
 // Complete slot structure based on Freshers Winter Semester 2025-26 Slot Timetable
-// Theory: Up to 10 slots per day (index 0-4 = morning, 5-9 = afternoon)
+// Theory: 5 morning slots + 5 afternoon slots (indices 0-4 = morning, 5-9 = afternoon)
 // Lab: 6 combined slots per day (3 morning + 3 afternoon), each slot is a pair like L61+L62
 export const TIMETABLE_STRUCTURE: Record<Day, { theory: (string | null)[]; lab: (string | null)[] }> = {
   MON: {
-    theory: ['TA1', 'TB1', 'E1', 'E1', null, 'TA2', 'TB2', 'E2', 'E2', null],
+    theory: [null, 'TA1', 'TB1', 'E1', 'E1', 'TA2', 'TB2', 'E2', 'E2', null],
     lab: ['L61+L62', 'L63+L64', 'L65+L66', 'L67+L68', 'L69+L70', 'L71+L72'],
   },
   TUE: {
@@ -93,12 +93,12 @@ export const TIMETABLE_STRUCTURE: Record<Day, { theory: (string | null)[]; lab: 
     lab: ['L19+L20', 'L21+L22', 'L23+L24', 'L49+L50', 'L51+L52', 'L53+L54'],
   },
   SAT: {
-    theory: ['TC1', 'C1', 'F1', 'G1/TD1', 'G2/TD2', 'D2', 'F2', 'C2', null, null],
+    theory: [null, 'TC1', 'C1', 'F1', 'G1/TD1', 'G2/TD2', 'D2', 'F2', 'C2', null],
     lab: ['L25+L26', 'L27+L28', 'L29+L30', 'L55+L56', 'L57+L58', 'L59+L60'],
   },
 };
 
-// All available slot codes for the sidebar (includes combined slots)
+// All available theory slot codes for the sidebar
 export const ALL_THEORY_SLOTS = [
   'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2', 'G1', 'G2',
   'TA1', 'TA2', 'TB1', 'TB2', 'TC1', 'TC2', 'TG1', 'TG2',
@@ -134,7 +134,6 @@ export const THEORY_TIME_RANGES: [number, number][] = [
 ];
 
 // Lab time boundaries (in minutes from midnight) - 6 combined slots (1hr 40min each)
-// Each lab slot spans about 100 minutes
 export const LAB_TIME_RANGES: [number, number][] = [
   [480, 580],   // 0: 8:00-9:40 (L1+L2, L7+L8, etc.)
   [590, 690],   // 1: 9:50-11:30

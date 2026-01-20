@@ -9,10 +9,11 @@ interface TimetableGridProps {
 }
 
 export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: TimetableGridProps) {
-  // Theory: 5 morning + LUNCH + 5 afternoon
+  // Theory: 5 morning + 5 afternoon (indices 0-4, 5-9)
   const theoryMorning = THEORY_TIMES.slice(0, 5);
   const theoryAfternoon = THEORY_TIMES.slice(6); // Skip LUNCH at index 5
-  // Lab: 3 morning + LUNCH + 3 afternoon (combined slots)
+  
+  // Lab: 3 morning + 3 afternoon combined slots
   const labMorning = LAB_TIMES.slice(0, 3);
   const labAfternoon = LAB_TIMES.slice(4); // Skip LUNCH at index 3
 
@@ -34,10 +35,9 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
       <div className="overflow-x-auto">
         <table className="timetable-table">
           <thead>
-            {/* Theory Hours Header */}
+            {/* Theory Hours Header Row */}
             <tr className="theory-hours-header">
-              <th className="timetable-th sticky-col" rowSpan={2}>Day</th>
-              <th className="timetable-th" rowSpan={2}>Type</th>
+              <th className="timetable-th header-label">Theory Hours</th>
               {theoryMorning.map((time, idx) => (
                 <th key={`theory-am-${idx}`} className="timetable-th time-header theory-time">
                   {time}
@@ -52,8 +52,9 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
                 </th>
               ))}
             </tr>
-            {/* Lab Hours Header */}
+            {/* Lab Hours Header Row */}
             <tr className="lab-hours-header">
+              <th className="timetable-th header-label">Lab Hours</th>
               {labMorning.map((time, idx) => (
                 <th key={`lab-am-${idx}`} className="timetable-th time-header lab-time" colSpan={idx === 2 ? 1 : 2}>
                   {time}
@@ -71,8 +72,10 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
               <React.Fragment key={day}>
                 {/* Theory Row */}
                 <tr className="theory-row">
-                  <td className="timetable-td sticky-col font-bold day-cell" rowSpan={2}>{day}</td>
-                  <td className="timetable-td type-label theory-label">Theory</td>
+                  <td className="timetable-td day-type-cell">
+                    <span className="day-label">{day}</span>
+                    <span className="type-label theory-label">Theory</span>
+                  </td>
                   {/* Morning theory slots (5 slots) */}
                   {[0, 1, 2, 3, 4].map((idx) => {
                     const slotCode = getTheorySlot(day, idx);
@@ -110,7 +113,10 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
                 </tr>
                 {/* Lab Row */}
                 <tr className="lab-row">
-                  <td className="timetable-td type-label lab-label">Lab</td>
+                  <td className="timetable-td day-type-cell">
+                    <span className="day-label invisible">{day}</span>
+                    <span className="type-label lab-label">Lab</span>
+                  </td>
                   {/* Morning lab slots (3 combined slots spanning 2 theory columns each, except last) */}
                   {[0, 1, 2].map((idx) => {
                     const slotCode = getLabSlot(day, idx);
