@@ -60,7 +60,7 @@ const Index = () => {
   };
 
   const handleExportPNG = () => {
-    exportToPNG('timetable-export');
+    exportToPNG(assignments);
     toast({
       title: 'Exporting PNG',
       description: 'Your timetable is being downloaded...',
@@ -68,7 +68,7 @@ const Index = () => {
   };
 
   const handleExportPDF = () => {
-    exportToPDF('timetable-export');
+    exportToPDF(assignments);
     toast({
       title: 'Exporting PDF',
       description: 'Your timetable is being downloaded...',
