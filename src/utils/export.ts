@@ -251,6 +251,26 @@ function drawTimetableOnCanvas(
   });
 }
 
+// Find assignment for a slot code (handles combined slots like "G1/TF1" or "A1/SF2")
+function findAssignment(
+  slotCode: string | null,
+  assignments: Record<string, SlotAssignment>
+): { assignment: SlotAssignment; matchedSlot: string } | null {
+  if (!slotCode) return null;
+  
+  // Split combined slot codes (e.g., "G1/TF1" -> ["G1", "TF1"])
+  const slotParts = slotCode.split('/');
+  
+  // Check each part for an assignment
+  for (const part of slotParts) {
+    if (assignments[part]) {
+      return { assignment: assignments[part], matchedSlot: part };
+    }
+  }
+  
+  return null;
+}
+
 // Draw a single slot cell
 function drawSlotCell(
   ctx: CanvasRenderingContext2D,
@@ -262,9 +282,10 @@ function drawSlotCell(
   assignments: Record<string, SlotAssignment>,
   type: 'theory' | 'lab'
 ): void {
-  const assignment = slotCode ? assignments[slotCode] : undefined;
+  const result = findAssignment(slotCode, assignments);
   
-  if (assignment) {
+  if (result) {
+    const { assignment, matchedSlot } = result;
     // Assigned slot
     ctx.fillStyle = assignment.colorTag;
     ctx.fillRect(x, y, width, height);
@@ -280,9 +301,9 @@ function drawSlotCell(
     ctx.font = `bold ${CONFIG.cellFontSize}px system-ui, -apple-system, sans-serif`;
     ctx.fillText(assignment.courseCode, x + width / 2, y + height / 2 - 10);
     
-    // Slot code
+    // Matched slot code (the one that has the assignment)
     ctx.font = `${CONFIG.smallFontSize}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(slotCode || '', x + width / 2, y + height / 2 + 3);
+    ctx.fillText(matchedSlot, x + width / 2, y + height / 2 + 3);
     
     // Course name (truncated)
     const courseName = assignment.courseName.length > 15 

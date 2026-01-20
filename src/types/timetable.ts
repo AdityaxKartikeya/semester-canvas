@@ -267,50 +267,12 @@ export function findAllClashingSlotCodes(assignedSlots: string[]): Set<string> {
   return clashingSet;
 }
 
-// Get all slot codes that share the same base slot
-// A1 = TA1 = SA1, B1 = TB1 = SB1, etc.
-// e.g., if you click "A1/SE2", this returns all slots containing A1, TA1, SA1, E2, TE2, SE2
+// Get all slot codes that are the same as the given slot
+// Each slot is independent - A1 ≠ TA1 ≠ SA1, D1 ≠ TD1 ≠ SD1
+// This function now just returns the slot itself since they're not equivalent
 export function getEquivalentSlots(baseSlot: string): string[] {
-  // Extract the letter and number from the slot
-  // Examples: A1 → (A, 1), TA1 → (A, 1), SA1 → (A, 1), TDD1 → (DD, 1), TEE1 → (EE, 1)
-  
-  // Handle special double-letter slots: TDD, TEE, TFF, TG
-  const specialSlots: Record<string, string[]> = {
-    'TDD1': ['TDD1'], 'TDD2': ['TDD2'],
-    'TEE1': ['TEE1'], 'TEE2': ['TEE2'],
-    'TFF1': ['TFF1'], 'TFF2': ['TFF2'],
-    'TG1': ['TG1', 'G1'], 'TG2': ['TG2', 'G2'],
-  };
-  
-  if (specialSlots[baseSlot]) {
-    return specialSlots[baseSlot];
-  }
-  
-  // For regular slots like A1, TA1, SA1, B1, TB1, SB1, etc.
-  // Remove T or S prefix to get base letter
-  let letter = baseSlot;
-  let number = '';
-  
-  // Extract number (1 or 2) from the end
-  const numMatch = baseSlot.match(/(\d)$/);
-  if (numMatch) {
-    number = numMatch[1];
-    letter = baseSlot.slice(0, -1);
-  }
-  
-  // Remove T or S prefix
-  if (letter.startsWith('T') && letter.length === 2) {
-    letter = letter.slice(1); // TA → A
-  } else if (letter.startsWith('S') && letter.length === 2) {
-    letter = letter.slice(1); // SA → A
-  }
-  
-  // Return all equivalent forms
-  return [
-    `${letter}${number}`,     // A1
-    `T${letter}${number}`,    // TA1
-    `S${letter}${number}`,    // SA1
-  ];
+  // Each slot is unique and independent
+  return [baseSlot];
 }
 
 export function getRelatedSlotCodes(slotCode: string): string[] {
