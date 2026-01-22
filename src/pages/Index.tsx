@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TimetableGrid } from '@/components/TimetableGrid';
 import { Sidebar } from '@/components/Sidebar';
 import { AssignSlotDialog } from '@/components/AssignSlotDialog';
+import { SlotSelectionDialog } from '@/components/SlotSelectionDialog';
 import { useTimetable } from '@/hooks/useTimetable';
 import { exportToPNG, exportToPDF } from '@/utils/export';
 import { toast } from '@/hooks/use-toast';
@@ -17,14 +18,42 @@ const Index = () => {
     getAssignment,
     getSlotClashes,
     isSlotClashing,
+    setSlotPreference,
+    resolveSlot,
   } = useTimetable();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [slotSelectionOpen, setSlotSelectionOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ code: string; type: 'theory' | 'lab' } | null>(null);
 
   const handleSlotClick = (slotCode: string, type: 'theory' | 'lab') => {
-    setSelectedSlot({ code: slotCode, type });
-    setDialogOpen(true);
+    // If the slot code contains a slash, it's an ambiguous slot that hasn't been resolved yet
+    // (because TimetableGrid passes the resolved slot, so if we still see '/', it means no preference is set)
+    if (slotCode.includes('/')) {
+      setSelectedSlot({ code: slotCode, type });
+      setSlotSelectionOpen(true);
+    } else {
+      setSelectedSlot({ code: slotCode, type });
+      setDialogOpen(true);
+    }
+  };
+
+  const handleSlotSelection = (preferredSlot: string) => {
+    if (selectedSlot) {
+      setSlotPreference(selectedSlot.code, preferredSlot);
+      setSlotSelectionOpen(false);
+
+      // After selection, open the assignment dialog for the preferred slot
+      // We need to wait a tick for the preference to update in the grid, 
+      // but for the dialog we can just set the code directly
+      setSelectedSlot({ code: preferredSlot, type: selectedSlot.type });
+      setDialogOpen(true);
+
+      toast({
+        title: 'Slot Preference Saved',
+        description: `You selected ${preferredSlot}. This choice will be remembered.`,
+      });
+    }
   };
 
   const handleAssign = (courseCode: string, courseName: string, professorName: string, color?: string) => {
@@ -84,14 +113,24 @@ const Index = () => {
         onExportPNG={handleExportPNG}
         onExportPDF={handleExportPDF}
       />
-      
+
       <main className="main-content">
         <TimetableGrid
           assignments={assignments}
           isSlotClashing={isSlotClashing}
           onSlotClick={handleSlotClick}
+          resolveSlot={resolveSlot}
         />
       </main>
+
+      {selectedSlot && (
+        <SlotSelectionDialog
+          open={slotSelectionOpen}
+          onOpenChange={setSlotSelectionOpen}
+          slotCode={selectedSlot.code}
+          onSelect={handleSlotSelection}
+        />
+      )}
 
       {selectedSlot && (
         <AssignSlotDialog

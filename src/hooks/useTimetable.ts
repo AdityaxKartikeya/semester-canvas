@@ -13,6 +13,7 @@ export interface TimetableData {
     color: string;
     slots: string[];
   }>;
+  slotPreferences?: Record<string, string>;
 }
 
 const getInitialData = (): TimetableData => {
@@ -31,16 +32,37 @@ export function useTimetable() {
   const [data, setData] = useState<TimetableData>(getInitialData);
   const [nextColorIndex, setNextColorIndex] = useState(0);
 
+  const [slotPreferences, setSlotPreferences] = useState<Record<string, string>>(() => {
+    return data.slotPreferences || {};
+  });
+
   // Save to localStorage whenever data changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...data, slotPreferences }));
+  }, [data, slotPreferences]);
+
+  // Update data state when slotPreferences changes to ensure persistence includes it
+  useEffect(() => {
+    setData(prev => ({ ...prev, slotPreferences }));
+  }, [slotPreferences]);
 
   // Get all clashing slot codes for disabling in UI
   const clashingSlotCodes = useMemo(() => {
     const assignedSlots = Object.keys(data.assignments);
     return findAllClashingSlotCodes(assignedSlots);
   }, [data.assignments]);
+
+  const setSlotPreference = useCallback((originalSlot: string, preferredSlot: string) => {
+    setSlotPreferences(prev => ({
+      ...prev,
+      [originalSlot]: preferredSlot
+    }));
+  }, []);
+
+  const resolveSlot = useCallback((slotCode: string | null): string | null => {
+    if (!slotCode) return null;
+    return slotPreferences[slotCode] || slotCode;
+  }, [slotPreferences]);
 
   const assignSlot = useCallback((
     slotCode: string,
@@ -50,8 +72,9 @@ export function useTimetable() {
     colorTag?: string
   ) => {
     // Get all related slots (e.g., for A1, get A1/SE2, A1/SF2, A1/SB2, etc.)
-    const relatedSlots = getRelatedSlotCodes(slotCode);
-    
+    const resolvedSlot = resolveSlot(slotCode)!;
+    const relatedSlots = getRelatedSlotCodes(resolvedSlot);
+
     setData(prev => {
       // Find if this course already exists
       let course = prev.courses.find(c => c.code === courseCode);
@@ -74,8 +97,8 @@ export function useTimetable() {
       } else {
         // Update existing course slots
         color = course.color;
-        courses = courses.map(c => 
-          c.code === courseCode 
+        courses = courses.map(c =>
+          c.code === courseCode
             ? { ...c, slots: [...new Set([...c.slots, ...relatedSlots])] }
             : c
         );
@@ -96,16 +119,18 @@ export function useTimetable() {
         ...prev,
         courses,
         assignments: newAssignments,
+        slotPreferences // Maintain preferences
       };
     });
-  }, [nextColorIndex]);
+  }, [nextColorIndex, resolveSlot]);
 
   const clearSlot = useCallback((slotCode: string) => {
+    const resolvedSlot = resolveSlot(slotCode)!;
     // Get all related slots to clear them all
-    const relatedSlots = getRelatedSlotCodes(slotCode);
-    
+    const relatedSlots = getRelatedSlotCodes(resolvedSlot);
+
     setData(prev => {
-      const assignment = prev.assignments[slotCode];
+      const assignment = prev.assignments[resolvedSlot];
       if (!assignment) return prev;
 
       const newAssignments = { ...prev.assignments };
@@ -122,49 +147,57 @@ export function useTimetable() {
         return c;
       }).filter(c => c.slots.length > 0);
 
-      return { assignments: newAssignments, courses };
+      return { assignments: newAssignments, courses, slotPreferences: prev.slotPreferences };
     });
-  }, []);
+  }, [resolveSlot]);
 
   const clearAll = useCallback(() => {
-    setData({ assignments: {}, courses: [] });
+    setData({ assignments: {}, courses: [], slotPreferences: {} });
+    setSlotPreferences({});
     setNextColorIndex(0);
   }, []);
 
   // Check for clashing slots based on time overlap (theory and lab)
   const getSlotClashes = useCallback((slotCode: string): string[] => {
+    const resolvedSlot = resolveSlot(slotCode)!;
     const assignedSlots = Object.keys(data.assignments);
-    
+
     // If this slot is already assigned, it's a clash with itself
-    if (data.assignments[slotCode]) {
-      return [slotCode];
+    if (data.assignments[resolvedSlot]) {
+      return [resolvedSlot];
     }
-    
+
     // Find time-based clashes with other assigned slots
-    return findClashingSlots(slotCode, assignedSlots);
-  }, [data.assignments]);
+    return findClashingSlots(resolvedSlot, assignedSlots);
+  }, [data.assignments, resolveSlot]);
 
   // Check if a specific slot is clashing (for disabling in UI)
   const isSlotClashing = useCallback((slotCode: string): boolean => {
-    return clashingSlotCodes.has(slotCode);
-  }, [clashingSlotCodes]);
+    const resolvedSlot = resolveSlot(slotCode)!;
+    return clashingSlotCodes.has(resolvedSlot);
+  }, [clashingSlotCodes, resolveSlot]);
 
   const isSlotAssigned = useCallback((slotCode: string): boolean => {
-    return !!data.assignments[slotCode];
-  }, [data.assignments]);
+    const resolvedSlot = resolveSlot(slotCode)!;
+    return !!data.assignments[resolvedSlot];
+  }, [data.assignments, resolveSlot]);
 
   const getAssignment = useCallback((slotCode: string): SlotAssignment | undefined => {
-    return data.assignments[slotCode];
-  }, [data.assignments]);
+    const resolvedSlot = resolveSlot(slotCode)!;
+    return data.assignments[resolvedSlot];
+  }, [data.assignments, resolveSlot]);
 
   const exportData = useCallback((): string => {
-    return JSON.stringify(data, null, 2);
-  }, [data]);
+    return JSON.stringify({ ...data, slotPreferences }, null, 2);
+  }, [data, slotPreferences]);
 
   const importData = useCallback((jsonString: string) => {
     try {
       const parsed = JSON.parse(jsonString) as TimetableData;
       setData(parsed);
+      if (parsed.slotPreferences) {
+        setSlotPreferences(parsed.slotPreferences);
+      }
       return true;
     } catch (e) {
       console.error('Failed to import data:', e);
@@ -175,6 +208,7 @@ export function useTimetable() {
   return {
     assignments: data.assignments,
     courses: data.courses,
+    slotPreferences,
     assignSlot,
     clearSlot,
     clearAll,
@@ -184,5 +218,7 @@ export function useTimetable() {
     getAssignment,
     exportData,
     importData,
+    setSlotPreference,
+    resolveSlot,
   };
 }

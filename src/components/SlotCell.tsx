@@ -14,7 +14,7 @@ export function SlotCell({ slotCode, assignment, type, isLunch, isDisabled, onCl
   if (isLunch) {
     return (
       <div className="slot-cell slot-lunch flex items-center justify-center">
-        <span className="text-muted-foreground font-medium text-sm">LUNCH</span>
+        {/* Lunch text is shown in header - cell is just styled */}
       </div>
     );
   }

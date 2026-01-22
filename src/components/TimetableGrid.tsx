@@ -6,13 +6,14 @@ interface TimetableGridProps {
   assignments: Record<string, SlotAssignment>;
   isSlotClashing: (slotCode: string) => boolean;
   onSlotClick: (slotCode: string, type: 'theory' | 'lab') => void;
+  resolveSlot: (slotCode: string | null) => string | null;
 }
 
-export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: TimetableGridProps) {
+export function TimetableGrid({ assignments, isSlotClashing, onSlotClick, resolveSlot }: TimetableGridProps) {
   // Theory: 5 morning + 5 afternoon (indices 0-4, 5-9)
   const theoryMorning = THEORY_TIMES.slice(0, 5);
   const theoryAfternoon = THEORY_TIMES.slice(6); // Skip LUNCH at index 5
-  
+
   // Lab: 3 morning + 3 afternoon combined slots
   const labMorning = LAB_TIMES.slice(0, 3);
   const labAfternoon = LAB_TIMES.slice(4); // Skip LUNCH at index 3
@@ -31,7 +32,7 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
         <h2 className="text-xl font-bold text-primary">Freshers Winter Semester 2025-26 Slot Timetable</h2>
         <p className="text-sm text-muted-foreground mt-1">Click any slot to assign a course</p>
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="timetable-table">
           <thead>
@@ -78,7 +79,8 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
                   </td>
                   {/* Morning theory slots (5 slots) */}
                   {[0, 1, 2, 3, 4].map((idx) => {
-                    const slotCode = getTheorySlot(day, idx);
+                    const rawSlot = getTheorySlot(day, idx);
+                    const slotCode = resolveSlot(rawSlot);
                     return (
                       <td key={`${day}-theory-am-${idx}`} className="timetable-td p-0">
                         <SlotCell
@@ -97,7 +99,8 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
                   </td>
                   {/* Afternoon theory slots (5 slots) */}
                   {[5, 6, 7, 8, 9].map((idx) => {
-                    const slotCode = getTheorySlot(day, idx);
+                    const rawSlot = getTheorySlot(day, idx);
+                    const slotCode = resolveSlot(rawSlot);
                     return (
                       <td key={`${day}-theory-pm-${idx}`} className="timetable-td p-0">
                         <SlotCell
@@ -119,7 +122,8 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
                   </td>
                   {/* Morning lab slots (3 combined slots spanning 2 theory columns each, except last) */}
                   {[0, 1, 2].map((idx) => {
-                    const slotCode = getLabSlot(day, idx);
+                    const rawSlot = getLabSlot(day, idx);
+                    const slotCode = resolveSlot(rawSlot);
                     return (
                       <td key={`${day}-lab-am-${idx}`} className="timetable-td p-0" colSpan={idx === 2 ? 1 : 2}>
                         <SlotCell
@@ -135,7 +139,8 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick }: Time
                   {/* Lunch cell is spanned from theory row */}
                   {/* Afternoon lab slots (3 combined slots) */}
                   {[3, 4, 5].map((idx) => {
-                    const slotCode = getLabSlot(day, idx);
+                    const rawSlot = getLabSlot(day, idx);
+                    const slotCode = resolveSlot(rawSlot);
                     return (
                       <td key={`${day}-lab-pm-${idx}`} className="timetable-td p-0" colSpan={idx === 3 ? 1 : 2}>
                         <SlotCell
