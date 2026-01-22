@@ -95,11 +95,11 @@ export function useTimetable() {
         };
         courses.push(course);
       } else {
-        // Update existing course slots
-        color = course.color;
+        // Update existing course - use new color if provided, otherwise keep existing
+        color = colorTag || course.color;
         courses = courses.map(c =>
           c.code === courseCode
-            ? { ...c, slots: [...new Set([...c.slots, ...relatedSlots])] }
+            ? { ...c, name: courseName, professor: professorName, color, slots: [...new Set([...c.slots, ...relatedSlots])] }
             : c
         );
       }
@@ -113,6 +113,18 @@ export function useTimetable() {
           professorName,
           colorTag: color!,
         };
+      }
+
+      // Also update all existing assignments for this course with the new color/details
+      for (const [slot, assignment] of Object.entries(newAssignments)) {
+        if (assignment.courseCode === courseCode) {
+          newAssignments[slot] = {
+            ...assignment,
+            courseName,
+            professorName,
+            colorTag: color!,
+          };
+        }
       }
 
       return {
