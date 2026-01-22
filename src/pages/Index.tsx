@@ -3,10 +3,11 @@ import { TimetableGrid } from '@/components/TimetableGrid';
 import { Sidebar } from '@/components/Sidebar';
 import { AssignSlotDialog } from '@/components/AssignSlotDialog';
 import { SlotSelectionDialog } from '@/components/SlotSelectionDialog';
+import { CombinationSelectionDialog } from '@/components/CombinationSelectionDialog';
 import { useTimetable } from '@/hooks/useTimetable';
 import { exportToPNG, exportToPDF } from '@/utils/export';
 import { toast } from '@/hooks/use-toast';
-import { getRelatedSlotCodes } from '@/types/timetable';
+import { getRelatedSlotCodes, getSlotCombinations, hasMultipleCombinations } from '@/types/timetable';
 
 const Index = () => {
   const {
@@ -24,7 +25,10 @@ const Index = () => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [slotSelectionOpen, setSlotSelectionOpen] = useState(false);
+  const [combinationSelectionOpen, setCombinationSelectionOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ code: string; type: 'theory' | 'lab' } | null>(null);
+  const [selectedCombination, setSelectedCombination] = useState<string[] | null>(null);
+  const [availableCombinations, setAvailableCombinations] = useState<string[][]>([]);
 
   const handleSlotClick = (slotCode: string, type: 'theory' | 'lab') => {
     // If the slot code contains a slash, it's an ambiguous slot that hasn't been resolved yet
@@ -33,9 +37,41 @@ const Index = () => {
       setSelectedSlot({ code: slotCode, type });
       setSlotSelectionOpen(true);
     } else {
-      setSelectedSlot({ code: slotCode, type });
-      setDialogOpen(true);
+      // Check if this slot is already assigned - if so, just open the assignment dialog
+      const existingAssignment = getAssignment(slotCode);
+      if (existingAssignment) {
+        setSelectedSlot({ code: slotCode, type });
+        setSelectedCombination(null);
+        setDialogOpen(true);
+        return;
+      }
+
+      // Check if this slot has multiple possible combinations
+      const combinations = getSlotCombinations(slotCode);
+      
+      if (combinations.length > 1) {
+        // Show combination selection dialog
+        setSelectedSlot({ code: slotCode, type });
+        setAvailableCombinations(combinations);
+        setCombinationSelectionOpen(true);
+      } else if (combinations.length === 1) {
+        // Only one combination, use it automatically
+        setSelectedSlot({ code: slotCode, type });
+        setSelectedCombination(combinations[0]);
+        setDialogOpen(true);
+      } else {
+        // No predefined combination (e.g., lab slots), proceed normally
+        setSelectedSlot({ code: slotCode, type });
+        setSelectedCombination(null);
+        setDialogOpen(true);
+      }
     }
+  };
+
+  const handleCombinationSelect = (combination: string[]) => {
+    setSelectedCombination(combination);
+    setCombinationSelectionOpen(false);
+    setDialogOpen(true);
   };
 
   const handleSlotSelection = (preferredSlot: string) => {
@@ -43,27 +79,56 @@ const Index = () => {
       setSlotPreference(selectedSlot.code, preferredSlot);
       setSlotSelectionOpen(false);
 
-      // After selection, open the assignment dialog for the preferred slot
-      // We need to wait a tick for the preference to update in the grid, 
-      // but for the dialog we can just set the code directly
-      setSelectedSlot({ code: preferredSlot, type: selectedSlot.type });
-      setDialogOpen(true);
-
       toast({
         title: 'Slot Preference Saved',
         description: `You selected ${preferredSlot}. This choice will be remembered.`,
       });
+
+      // After selection, check if the preferred slot has multiple combinations
+      const combinations = getSlotCombinations(preferredSlot);
+      
+      if (combinations.length > 1) {
+        // Show combination selection dialog
+        setSelectedSlot({ code: preferredSlot, type: selectedSlot.type });
+        setAvailableCombinations(combinations);
+        setCombinationSelectionOpen(true);
+      } else if (combinations.length === 1) {
+        // Only one combination, use it automatically
+        setSelectedSlot({ code: preferredSlot, type: selectedSlot.type });
+        setSelectedCombination(combinations[0]);
+        setDialogOpen(true);
+      } else {
+        // No predefined combination, proceed normally
+        setSelectedSlot({ code: preferredSlot, type: selectedSlot.type });
+        setSelectedCombination(null);
+        setDialogOpen(true);
+      }
     }
   };
 
   const handleAssign = (courseCode: string, courseName: string, professorName: string, color?: string) => {
     if (selectedSlot) {
-      const relatedSlots = getRelatedSlotCodes(selectedSlot.code);
-      assignSlot(selectedSlot.code, courseCode, courseName, professorName, color);
-      toast({
-        title: 'Slots Assigned',
-        description: `${courseCode} assigned to ${relatedSlots.length} slot${relatedSlots.length > 1 ? 's' : ''}: ${relatedSlots.join(', ')}`,
-      });
+      // If a combination was selected, assign all slots in the combination
+      if (selectedCombination && selectedCombination.length > 0) {
+        // Assign each slot in the combination
+        for (const slot of selectedCombination) {
+          assignSlot(slot, courseCode, courseName, professorName, color);
+        }
+        toast({
+          title: 'Slots Assigned',
+          description: `${courseCode} assigned to combination: ${selectedCombination.join(' + ')}`,
+        });
+      } else {
+        // No combination, just assign the selected slot and its related slots
+        const relatedSlots = getRelatedSlotCodes(selectedSlot.code);
+        assignSlot(selectedSlot.code, courseCode, courseName, professorName, color);
+        toast({
+          title: 'Slots Assigned',
+          description: `${courseCode} assigned to ${relatedSlots.length} slot${relatedSlots.length > 1 ? 's' : ''}: ${relatedSlots.join(', ')}`,
+        });
+      }
+      // Reset combination selection
+      setSelectedCombination(null);
     }
   };
 
@@ -133,10 +198,20 @@ const Index = () => {
       )}
 
       {selectedSlot && (
+        <CombinationSelectionDialog
+          open={combinationSelectionOpen}
+          onOpenChange={setCombinationSelectionOpen}
+          slotCode={selectedSlot.code}
+          combinations={availableCombinations}
+          onSelect={handleCombinationSelect}
+        />
+      )}
+
+      {selectedSlot && (
         <AssignSlotDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          slotCode={selectedSlot.code}
+          slotCode={selectedCombination ? selectedCombination.join(' + ') : selectedSlot.code}
           slotType={selectedSlot.type}
           existingAssignment={getAssignment(selectedSlot.code)}
           existingCourses={courses}

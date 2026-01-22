@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Info } from 'lucide-react';
-import { SLOT_COLORS, SlotAssignment, getRelatedSlotCodes } from '@/types/timetable';
+import { SLOT_COLORS, SlotAssignment } from '@/types/timetable';
 
 interface AssignSlotDialogProps {
   open: boolean;
@@ -41,8 +41,9 @@ export function AssignSlotDialog({
   const [professorName, setProfessorName] = useState('');
   const [selectedColor, setSelectedColor] = useState(SLOT_COLORS[0]);
 
-  // Get all related slots that will be assigned
-  const relatedSlots = getRelatedSlotCodes(slotCode);
+  // Parse slot code - if it contains '+', it's a combination
+  const slotParts = slotCode.includes('+') ? slotCode.split(' + ') : [slotCode];
+  const isCombination = slotParts.length > 1;
   const hasClash = clashingSlots.length > 0;
 
   // Reset form when dialog opens or slot changes
@@ -88,12 +89,12 @@ export function AssignSlotDialog({
         </DialogHeader>
         
         {/* Related Slots Info */}
-        {!existingAssignment && relatedSlots.length > 1 && (
+        {!existingAssignment && isCombination && (
           <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Will assign {relatedSlots.length} slots:</strong>{' '}
-              {relatedSlots.join(', ')}
+              <strong>Will assign {slotParts.length} slots:</strong>{' '}
+              {slotParts.join(', ')}
             </AlertDescription>
           </Alert>
         )}

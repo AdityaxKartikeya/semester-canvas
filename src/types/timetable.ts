@@ -71,6 +71,7 @@ export const SLOT_COLORS = [
 // Complete slot structure based on Freshers Winter Semester 2025-26 Slot Timetable
 // Theory: 5 morning slots + 5 afternoon slots (indices 0-4 = morning, 5-9 = afternoon)
 // Lab: 6 combined slots per day (3 morning + 3 afternoon), each slot is a pair like L61+L62
+// Note: G1 and G2 slots have been removed
 export const TIMETABLE_STRUCTURE: Record<Day, { theory: (string | null)[]; lab: (string | null)[] }> = {
   MON: {
     theory: [null, 'TA1', 'TB1', 'E1', 'E1', 'TA2', 'TB2', 'E2', 'E2', null],
@@ -81,28 +82,64 @@ export const TIMETABLE_STRUCTURE: Record<Day, { theory: (string | null)[]; lab: 
     lab: ['L1+L2', 'L3+L4', 'L5+L6', 'L31+L32', 'L33+L34', 'L35+L36'],
   },
   WED: {
-    theory: ['TEE1', 'D1', 'F1', 'G1/TE1', 'B1/SC2', 'D2', 'F2', 'B2/SD1', 'G2/TE2', 'TG2'],
+    theory: ['TEE1', 'D1', 'F1', 'TE1', 'B1/SC2', 'D2', 'F2', 'B2/SD1', 'TE2', null],
     lab: ['L7+L8', 'L9+L10', 'L11+L12', 'L37+L38', 'L39+L40', 'L41+L42'],
   },
   THU: {
-    theory: ['TG1', 'C1', 'D1', 'A1/SB2', 'F1', 'E2', 'C2', 'A2/SB1', 'D2', 'TFF2'],
+    theory: [null, 'C1', 'D1', 'A1/SB2', 'F1', 'E2', 'C2', 'A2/SB1', 'D2', 'TFF2'],
     lab: ['L13+L14', 'L15+L16', 'L17+L18', 'L43+L44', 'L45+L46', 'L47+L48'],
   },
   FRI: {
-    theory: ['TDD1', 'B1/SA2', 'A1/SF2', 'G1/TF1', 'E1', 'TC2', 'B2/SA1', 'A2/SE1', 'G2/TF2', 'TEE2'],
+    theory: ['TDD1', 'B1/SA2', 'A1/SF2', 'TF1', 'E1', 'TC2', 'B2/SA1', 'A2/SE1', 'TF2', 'TEE2'],
     lab: ['L19+L20', 'L21+L22', 'L23+L24', 'L49+L50', 'L51+L52', 'L53+L54'],
   },
   SAT: {
-    theory: [null, 'TC1', 'C1', 'F1', 'G1/TD1', 'G2/TD2', 'D2', 'F2', 'C2', null],
+    theory: [null, 'TC1', 'C1', 'F1', 'TD1', 'TD2', 'D2', 'F2', 'C2', null],
     lab: ['L25+L26', 'L27+L28', 'L29+L30', 'L55+L56', 'L57+L58', 'L59+L60'],
   },
 };
 
-// All available theory slot codes for the sidebar
+// Theory slot combinations - when one slot is selected, all slots in the combination must be selected together
+// Some slots have multiple possible combinations - user must choose one
+export const THEORY_SLOT_COMBINATIONS: string[][] = [
+  ['A1', 'TA1'],
+  ['A2', 'TA2'],
+  ['B1', 'SB1', 'TB1'],
+  ['B2', 'SB2', 'TB2'],
+  ['C1', 'TC1'],
+  ['C2', 'TC2'],
+  ['D1', 'TD1'],
+  ['D1', 'TDD1'],
+  ['E1', 'SE1', 'TE1'],
+  ['E2', 'TE2', 'TEE2'],
+  ['E2', 'SE2', 'TE2'],
+  ['F1', 'TF1', 'TFF1'],
+  ['F1', 'SF1', 'TF1'],
+  ['F2', 'TF2', 'TFF2'],
+  ['F2', 'SF2', 'TF2'],
+];
+
+// Get all combinations that include a given slot
+export function getSlotCombinations(slotCode: string): string[][] {
+  return THEORY_SLOT_COMBINATIONS.filter(combo => combo.includes(slotCode));
+}
+
+// Get all slots in a combination (for auto-selection)
+export function getCombinationSlots(combination: string[]): string[] {
+  return [...combination];
+}
+
+// Check if a slot has multiple combination options
+export function hasMultipleCombinations(slotCode: string): boolean {
+  return getSlotCombinations(slotCode).length > 1;
+}
+
+// All available theory slot codes for the sidebar (G1, G2 removed)
 export const ALL_THEORY_SLOTS = [
-  'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2', 'G1', 'G2',
-  'TA1', 'TA2', 'TB1', 'TB2', 'TC1', 'TC2', 'TG1', 'TG2',
-  'TDD1', 'TDD2', 'TEE1', 'TEE2', 'TFF1', 'TFF2',
+  'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2',
+  'TA1', 'TA2', 'TB1', 'TB2', 'TC1', 'TC2',
+  'TD1', 'TDD1', 'TE1', 'TE2', 'TEE2', 'TF1', 'TF2', 'TFF1', 'TFF2',
+  'SA1', 'SA2', 'SB1', 'SB2', 'SC1', 'SC2', 'SD1', 'SD2', 'SE1', 'SE2', 'SF1', 'SF2',
 ];
 
 // Lab slots are combined pairs
@@ -286,7 +323,8 @@ export function getRelatedSlotCodes(slotCode: string): string[] {
     equivalents.forEach(eq => allEquivalents.add(eq));
   }
   
-  const relatedSlots: string[] = [];
+  // Start with the base slot codes themselves (important for assignment lookups)
+  const relatedSlots: string[] = [...allEquivalents];
   
   for (const day of DAYS) {
     const structure = TIMETABLE_STRUCTURE[day];
