@@ -102,21 +102,43 @@ export const TIMETABLE_STRUCTURE: Record<Day, { theory: (string | null)[]; lab: 
 // Theory slot combinations - when one slot is selected, all slots in the combination must be selected together
 // Some slots have multiple possible combinations - user must choose one
 export const THEORY_SLOT_COMBINATIONS: string[][] = [
+  // Basic 2-slot combinations
   ['A1', 'TA1'],
   ['A2', 'TA2'],
-  ['B1', 'SB1', 'TB1'],
-  ['B2', 'SB2', 'TB2'],
+  ['B1', 'TB1'],
+  ['B2', 'TB2'],
   ['C1', 'TC1'],
   ['C2', 'TC2'],
   ['D1', 'TD1'],
+  ['D2', 'TD2'],
+  ['E1', 'TE1'],
+  ['E2', 'TE2'],
+  ['F1', 'TF1'],
+  ['F2', 'TF2'],
+  // D, E, F with double T slots
   ['D1', 'TDD1'],
+  ['D2', 'TDD2'],
+  ['E1', 'TEE1'],
+  ['E2', 'TEE2'],
+  ['F1', 'TFF1'],
+  ['F2', 'TFF2'],
+  // 3-slot combinations with S slots
+  ['A1', 'SA1', 'TA1'],
+  ['A2', 'SA2', 'TA2'],
+  ['B1', 'SB1', 'TB1'],
+  ['B2', 'SB2', 'TB2'],
+  ['D1', 'SD1', 'TD1'],
+  ['D2', 'SD2', 'TD2'],
   ['E1', 'SE1', 'TE1'],
-  ['E2', 'TE2', 'TEE2'],
   ['E2', 'SE2', 'TE2'],
-  ['F1', 'TF1', 'TFF1'],
   ['F1', 'SF1', 'TF1'],
-  ['F2', 'TF2', 'TFF2'],
   ['F2', 'SF2', 'TF2'],
+  // 3-slot combinations with double T slots
+  ['D1', 'TD1', 'TDD1'],
+  ['D2', 'TD2', 'TDD2'],
+  ['F1', 'TF1', 'TFF1'],
+  ['F2', 'TF2', 'TFF2'],
+  ['E2', 'TE2', 'TEE2'],
 ];
 
 // Get all combinations that include a given slot
@@ -138,7 +160,7 @@ export function hasMultipleCombinations(slotCode: string): boolean {
 export const ALL_THEORY_SLOTS = [
   'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2',
   'TA1', 'TA2', 'TB1', 'TB2', 'TC1', 'TC2',
-  'TD1', 'TDD1', 'TE1', 'TE2', 'TEE2', 'TF1', 'TF2', 'TFF1', 'TFF2',
+  'TD1', 'TD2', 'TDD1', 'TDD2', 'TE1', 'TE2', 'TEE1', 'TEE2', 'TF1', 'TF2', 'TFF1', 'TFF2',
   'SA1', 'SA2', 'SB1', 'SB2', 'SC1', 'SC2', 'SD1', 'SD2', 'SE1', 'SE2', 'SF1', 'SF2',
 ];
 
