@@ -29,7 +29,7 @@ export function TimetableGrid({ assignments, isSlotClashing, onSlotClick, resolv
   return (
     <div className="timetable-container" id="timetable-export">
       <div className="timetable-header">
-        <h2 className="text-xl font-bold text-primary">Freshers Winter Semester 2025-26 Slot Timetable</h2>
+        <h2 className="text-xl font-bold text-primary">Slot Timetable</h2>
         <p className="text-sm text-muted-foreground mt-1">Click any slot to assign a course</p>
       </div>
 

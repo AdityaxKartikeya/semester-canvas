@@ -68,10 +68,7 @@ export const SLOT_COLORS = [
   '#84CC16', // Lime
 ] as const;
 
-// Complete slot structure based on Freshers Winter Semester 2025-26 Slot Timetable
-// Theory: 5 morning slots + 5 afternoon slots (indices 0-4 = morning, 5-9 = afternoon)
-// Lab: 6 combined slots per day (3 morning + 3 afternoon), each slot is a pair like L61+L62
-// Note: G1 and G2 slots have been removed
+// Complete slot structure
 export const TIMETABLE_STRUCTURE: Record<Day, { theory: (string | null)[]; lab: (string | null)[] }> = {
   MON: {
     theory: [null, 'TA1', 'TB1', 'E1', 'E1', 'TA2', 'TB2', 'E2', 'E2', null],
@@ -82,19 +79,19 @@ export const TIMETABLE_STRUCTURE: Record<Day, { theory: (string | null)[]; lab: 
     lab: ['L1+L2', 'L3+L4', 'L5+L6', 'L31+L32', 'L33+L34', 'L35+L36'],
   },
   WED: {
-    theory: ['TEE1', 'D1', 'F1', 'TE1', 'B1/SC2', 'D2', 'F2', 'B2/SD1', 'TE2', null],
+    theory: ['TEE1', 'D1', 'F1', 'G1/TE1', 'B1/SC2', 'D2', 'F2', 'B2/SD1', 'G2/TE2', 'TG2'],
     lab: ['L7+L8', 'L9+L10', 'L11+L12', 'L37+L38', 'L39+L40', 'L41+L42'],
   },
   THU: {
-    theory: [null, 'C1', 'D1', 'A1/SB2', 'F1', 'E2', 'C2', 'A2/SB1', 'D2', 'TFF2'],
+    theory: ['TG1', 'C1', 'D1', 'A1/SB2', 'F1', 'E2', 'C2', 'A2/SB1', 'D2', 'TFF2'],
     lab: ['L13+L14', 'L15+L16', 'L17+L18', 'L43+L44', 'L45+L46', 'L47+L48'],
   },
   FRI: {
-    theory: ['TDD1', 'B1/SA2', 'A1/SF2', 'TF1', 'E1', 'TC2', 'B2/SA1', 'A2/SE1', 'TF2', 'TEE2'],
+    theory: ['TDD1', 'B1/SA2', 'A1/SF2', 'G1/TF1', 'E1', 'TC2', 'B2/SA1', 'A2/SE1', 'G2/TF2', 'TEE2'],
     lab: ['L19+L20', 'L21+L22', 'L23+L24', 'L49+L50', 'L51+L52', 'L53+L54'],
   },
   SAT: {
-    theory: [null, 'TC1', 'C1', 'F1', 'TD1', 'TD2', 'D2', 'F2', 'C2', null],
+    theory: [null, 'TC1', 'C1', 'F1', 'G1/TD1', 'G2/TD2', 'D2', 'F2', 'C2', null],
     lab: ['L25+L26', 'L27+L28', 'L29+L30', 'L55+L56', 'L57+L58', 'L59+L60'],
   },
 };
@@ -115,6 +112,8 @@ export const THEORY_SLOT_COMBINATIONS: string[][] = [
   ['E2', 'TE2'],
   ['F1', 'TF1'],
   ['F2', 'TF2'],
+  ['G1', 'TG1'],
+  ['G2', 'TG2'],
   // D, E, F with double T slots
   ['D1', 'TDD1'],
   ['D2', 'TDD2'],
@@ -156,11 +155,11 @@ export function hasMultipleCombinations(slotCode: string): boolean {
   return getSlotCombinations(slotCode).length > 1;
 }
 
-// All available theory slot codes for the sidebar (G1, G2 removed)
+// All available theory slot codes for the sidebar
 export const ALL_THEORY_SLOTS = [
-  'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2',
-  'TA1', 'TA2', 'TB1', 'TB2', 'TC1', 'TC2',
-  'TD1', 'TD2', 'TDD1', 'TDD2', 'TE1', 'TE2', 'TEE1', 'TEE2', 'TF1', 'TF2', 'TFF1', 'TFF2',
+  'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2', 'G1', 'G2',
+  'TA1', 'TA2', 'TB1', 'TB2', 'TC1', 'TC2', 'TD1', 'TD2', 'TE1', 'TE2', 'TF1', 'TF2', 'TG1', 'TG2',
+  'TDD1', 'TDD2', 'TEE1', 'TEE2', 'TFF1', 'TFF2',
   'SA1', 'SA2', 'SB1', 'SB2', 'SC1', 'SC2', 'SD1', 'SD2', 'SE1', 'SE2', 'SF1', 'SF2',
 ];
 
@@ -252,6 +251,127 @@ function timeRangesOverlap(range1: [number, number], range2: [number, number]): 
   return range1[0] < range2[1] && range2[0] < range1[1];
 }
 
+interface BreakWindowRule {
+  name: string;
+  start: number;
+  end: number;
+  minimumFreeMinutes: number;
+}
+
+const BREAK_WINDOW_RULES: BreakWindowRule[] = [
+  { name: 'Breakfast', start: 7 * 60 + 15, end: 9 * 60, minimumFreeMinutes: 45 },
+  { name: 'Lunch', start: 12 * 60 + 15, end: 14 * 60, minimumFreeMinutes: 45 },
+  { name: 'Snacks', start: 16 * 60 + 15, end: 18 * 60 + 15, minimumFreeMinutes: 15 },
+  { name: 'Dinner', start: 19 * 60 + 15, end: 21 * 60, minimumFreeMinutes: 45 },
+];
+
+function getSlotTimeRange(slotOccurrence: { type: 'theory' | 'lab'; columnIndex: number }): [number, number] | null {
+  return slotOccurrence.type === 'theory'
+    ? THEORY_TIME_RANGES[slotOccurrence.columnIndex] || null
+    : LAB_TIME_RANGES[slotOccurrence.columnIndex] || null;
+}
+
+function getOccupiedTimeRangesForDay(slotCodes: string[], day: Day): [number, number][] {
+  const ranges: [number, number][] = [];
+
+  for (const slotCode of slotCodes) {
+    const occurrences = getAllSlotOccurrences(slotCode);
+    for (const occurrence of occurrences) {
+      if (occurrence.day !== day) continue;
+      const timeRange = getSlotTimeRange(occurrence);
+      if (timeRange) {
+        ranges.push(timeRange);
+      }
+    }
+  }
+
+  return ranges;
+}
+
+function mergeRanges(ranges: [number, number][]): [number, number][] {
+  if (ranges.length === 0) return [];
+
+  const sorted = [...ranges].sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+
+    if (current[0] <= last[1]) {
+      last[1] = Math.max(last[1], current[1]);
+    } else {
+      merged.push([current[0], current[1]]);
+    }
+  }
+
+  return merged;
+}
+
+function getMaxContinuousFreeTime(windowStart: number, windowEnd: number, occupiedRanges: [number, number][]): number {
+  if (occupiedRanges.length === 0) return windowEnd - windowStart;
+  
+  let maxGap = 0;
+  let currentStart = windowStart;
+  
+  for (const range of occupiedRanges) {
+    if (range[0] > currentStart) {
+      maxGap = Math.max(maxGap, range[0] - currentStart);
+    }
+    currentStart = Math.max(currentStart, range[1]);
+  }
+  
+  if (windowEnd > currentStart) {
+    maxGap = Math.max(maxGap, windowEnd - currentStart);
+  }
+  
+  return maxGap;
+}
+
+function getOverlapRange(range1: [number, number], range2: [number, number]): [number, number] | null {
+  const start = Math.max(range1[0], range2[0]);
+  const end = Math.min(range1[1], range2[1]);
+  return start < end ? [start, end] : null;
+}
+
+function getBreakRuleViolations(candidateSlotCode: string, assignedSlots: string[]): string[] {
+  const violations: string[] = [];
+  const candidateRelatedSlots = getRelatedSlotCodes(candidateSlotCode);
+  const candidateOccurrences = candidateRelatedSlots.flatMap(slot => getAllSlotOccurrences(slot));
+
+  if (candidateOccurrences.length === 0) return violations;
+
+  const affectedDays = new Set<Day>(candidateOccurrences.map(occ => occ.day));
+  const simulatedSlots = Array.from(new Set([...assignedSlots, ...candidateRelatedSlots]));
+
+  for (const day of affectedDays) {
+    const occupiedRanges = getOccupiedTimeRangesForDay(simulatedSlots, day);
+
+    for (const rule of BREAK_WINDOW_RULES) {
+      const breakWindow: [number, number] = [rule.start, rule.end];
+      
+      // Only check the rule if the candidate slot actually overlaps with this break window
+      const candidateOccupiedRanges = getOccupiedTimeRangesForDay(candidateRelatedSlots, day);
+      const candidateOverlapsWindow = candidateOccupiedRanges.some(range => getOverlapRange(range, breakWindow) !== null);
+      
+      if (!candidateOverlapsWindow) continue;
+
+      const occupiedInWindow = occupiedRanges
+        .map(range => getOverlapRange(range, breakWindow))
+        .filter((range): range is [number, number] => range !== null);
+
+      const mergedOccupied = mergeRanges(occupiedInWindow);
+      const continuousFreeMinutes = getMaxContinuousFreeTime(rule.start, rule.end, mergedOccupied);
+
+      if (continuousFreeMinutes < rule.minimumFreeMinutes) {
+        violations.push(`${rule.name} break (${day})`);
+      }
+    }
+  }
+
+  return violations;
+}
+
 // Find all clashing slots for a given slot code based on time overlap
 export function findClashingSlots(
   slotCode: string,
@@ -290,6 +410,13 @@ export function findClashingSlots(
       }
     }
   }
+
+  const breakRuleViolations = getBreakRuleViolations(slotCode, assignedSlots);
+  for (const violation of breakRuleViolations) {
+    if (!clashingSlots.includes(violation)) {
+      clashingSlots.push(violation);
+    }
+  }
   
   return clashingSlots;
 }
@@ -326,24 +453,10 @@ export function findAllClashingSlotCodes(assignedSlots: string[]): Set<string> {
   return clashingSet;
 }
 
-// Get all slot codes that are the same as the given slot
-// Each slot is independent - A1 ≠ TA1 ≠ SA1, D1 ≠ TD1 ≠ SD1
-// This function now just returns the slot itself since they're not equivalent
-export function getEquivalentSlots(baseSlot: string): string[] {
-  // Each slot is unique and independent
-  return [baseSlot];
-}
-
 export function getRelatedSlotCodes(slotCode: string): string[] {
   // For combined slots like "A1/SE2", extract both parts
   const parts = slotCode.split('/');
-  const allEquivalents: Set<string> = new Set();
-  
-  // Get all equivalent slot codes for each part
-  for (const part of parts) {
-    const equivalents = getEquivalentSlots(part);
-    equivalents.forEach(eq => allEquivalents.add(eq));
-  }
+  const allEquivalents: Set<string> = new Set(parts);
   
   // Start with the base slot codes themselves (important for assignment lookups)
   const relatedSlots: string[] = [...allEquivalents];
