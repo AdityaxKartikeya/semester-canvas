@@ -8,7 +8,7 @@ There are several ways of editing your application.
 
 If you want to work locally using your own IDE, you can clone this repo and push changes.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+The only requirement is having Node.js and npm installed.
 
 Follow these steps:
 # Step 1: Clone the repository using the project's Git URL.
@@ -23,13 +23,13 @@ npm i
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 
-**Edit a file directly in GitHub**
+**Edit a file directly in your repository web interface**
 
 - Navigate to the desired file(s).
 - Click the "Edit" button (pencil icon) at the top right of the file view.
 - Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
+**Use a cloud development environment**
 
 - Navigate to the main page of your repository.
 - Click on the "Code" button (green button) near the top right.
