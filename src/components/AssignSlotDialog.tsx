@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ interface AssignSlotDialogProps {
   slotType: 'theory' | 'lab';
   existingAssignment?: SlotAssignment;
   existingCourses: Array<{ code: string; name: string; professor: string; color: string }>;
+  courseRecommendations: Array<{ course_code: string; course_title: string }>;
   clashingSlots: string[];
   onAssign: (courseCode: string, courseName: string, professorName: string, color?: string) => void;
   onClear: () => void;
@@ -32,6 +33,7 @@ export function AssignSlotDialog({
   slotType,
   existingAssignment,
   existingCourses,
+  courseRecommendations,
   clashingSlots,
   onAssign,
   onClear,
@@ -45,6 +47,58 @@ export function AssignSlotDialog({
   const slotParts = slotCode.includes('+') ? slotCode.split(' + ') : [slotCode];
   const isCombination = slotParts.length > 1;
   const hasClash = clashingSlots.length > 0;
+
+  const getRankedSuggestions = (queryValue: string) => {
+    const query = queryValue.trim().toLowerCase();
+
+    if (!query) {
+      return courseRecommendations.slice(0, 8);
+    }
+
+    const ranked = courseRecommendations
+      .map((course) => {
+        const code = course.course_code.toLowerCase();
+        const title = course.course_title.toLowerCase();
+
+        const codeStartsWith = code.startsWith(query);
+        const titleContains = title.includes(query);
+        const codeContains = code.includes(query);
+
+        if (!codeContains && !titleContains) {
+          return null;
+        }
+
+        let rank = 3;
+        if (codeStartsWith) {
+          rank = 0;
+        } else if (titleContains) {
+          rank = 1;
+        } else if (codeContains) {
+          rank = 2;
+        }
+
+        return { course, rank };
+      })
+      .filter((item): item is { course: { course_code: string; course_title: string }; rank: number } => item !== null)
+      .sort((a, b) => {
+        if (a.rank !== b.rank) {
+          return a.rank - b.rank;
+        }
+        return a.course.course_code.localeCompare(b.course.course_code);
+      })
+      .slice(0, 8)
+      .map((item) => item.course);
+
+    return ranked;
+  };
+
+  const codeSuggestions = useMemo(() => {
+    return getRankedSuggestions(courseCode);
+  }, [courseCode, courseRecommendations]);
+
+  const titleSuggestions = useMemo(() => {
+    return getRankedSuggestions(courseName);
+  }, [courseName, courseRecommendations]);
 
   // Reset form when dialog opens or slot changes
   useEffect(() => {
@@ -74,6 +128,36 @@ export function AssignSlotDialog({
     setCourseName(course.name);
     setProfessorName(course.professor);
     setSelectedColor(course.color);
+  };
+
+  const handleRecommendationSelect = (course: { course_code: string; course_title: string }) => {
+    setCourseCode(course.course_code);
+    setCourseName(course.course_title);
+  };
+
+  const handleCourseCodeChange = (value: string) => {
+    const normalizedValue = value.toUpperCase();
+    setCourseCode(normalizedValue);
+
+    const exactCodeMatch = courseRecommendations.find(
+      (course) => course.course_code.toLowerCase() === normalizedValue.trim().toLowerCase()
+    );
+
+    if (exactCodeMatch) {
+      setCourseName(exactCodeMatch.course_title);
+    }
+  };
+
+  const handleCourseNameChange = (value: string) => {
+    setCourseName(value);
+
+    const exactTitleMatch = courseRecommendations.find(
+      (course) => course.course_title.toLowerCase() === value.trim().toLowerCase()
+    );
+
+    if (exactTitleMatch) {
+      setCourseCode(exactTitleMatch.course_code);
+    }
   };
 
   return (
@@ -133,22 +217,68 @@ export function AssignSlotDialog({
             <Label htmlFor="courseCode">Course Code *</Label>
             <Input
               id="courseCode"
+              list="course-code-suggestions"
               value={courseCode}
-              onChange={(e) => setCourseCode(e.target.value)}
+              onChange={(e) => handleCourseCodeChange(e.target.value)}
               placeholder="e.g., CSE1001"
               required
             />
+            <datalist id="course-code-suggestions">
+              {codeSuggestions.map((course) => (
+                <option key={course.course_code} value={course.course_code}>
+                  {course.course_title}
+                </option>
+              ))}
+            </datalist>
+            {courseCode.trim() !== '' && codeSuggestions.length > 0 && (
+              <div className="rounded-md border bg-background max-h-32 overflow-y-auto">
+                {codeSuggestions.map((course) => (
+                  <button
+                    key={`code-${course.course_code}`}
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                    onClick={() => handleRecommendationSelect(course)}
+                  >
+                    <span className="font-medium">{course.course_code}</span>
+                    <span className="text-muted-foreground"> - {course.course_title}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="courseName">Course Name *</Label>
             <Input
               id="courseName"
+              list="course-title-suggestions"
               value={courseName}
-              onChange={(e) => setCourseName(e.target.value)}
+              onChange={(e) => handleCourseNameChange(e.target.value)}
               placeholder="e.g., Problem Solving"
               required
             />
+            <datalist id="course-title-suggestions">
+              {titleSuggestions.map((course) => (
+                <option key={course.course_code} value={course.course_title}>
+                  {course.course_code}
+                </option>
+              ))}
+            </datalist>
+            {courseName.trim() !== '' && titleSuggestions.length > 0 && (
+              <div className="rounded-md border bg-background max-h-32 overflow-y-auto">
+                {titleSuggestions.map((course) => (
+                  <button
+                    key={`title-${course.course_code}`}
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                    onClick={() => handleRecommendationSelect(course)}
+                  >
+                    <span className="font-medium">{course.course_title}</span>
+                    <span className="text-muted-foreground"> - {course.course_code}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

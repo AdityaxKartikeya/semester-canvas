@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TimetableGrid } from '@/components/TimetableGrid';
 import { Sidebar } from '@/components/Sidebar';
 import { AssignSlotDialog } from '@/components/AssignSlotDialog';
@@ -29,6 +29,27 @@ const Index = () => {
   const [selectedSlot, setSelectedSlot] = useState<{ code: string; type: 'theory' | 'lab' } | null>(null);
   const [selectedCombination, setSelectedCombination] = useState<string[] | null>(null);
   const [availableCombinations, setAvailableCombinations] = useState<string[][]>([]);
+  const [courseRecommendations, setCourseRecommendations] = useState<Array<{ course_code: string; course_title: string }>>([]);
+
+  useEffect(() => {
+    const loadCourseRecommendations = async () => {
+      try {
+        const response = await fetch('/list.json');
+        if (!response.ok) {
+          throw new Error(`Failed to load course catalog (${response.status})`);
+        }
+
+        const catalog = await response.json();
+        if (Array.isArray(catalog)) {
+          setCourseRecommendations(catalog);
+        }
+      } catch (error) {
+        console.error('Failed to load course recommendations:', error);
+      }
+    };
+
+    loadCourseRecommendations();
+  }, []);
 
   const handleSlotClick = (slotCode: string, type: 'theory' | 'lab') => {
     // If the slot code contains a slash, it's an ambiguous slot that hasn't been resolved yet
@@ -215,6 +236,7 @@ const Index = () => {
           slotType={selectedSlot.type}
           existingAssignment={getAssignment(selectedSlot.code)}
           existingCourses={courses}
+          courseRecommendations={courseRecommendations}
           clashingSlots={getSlotClashes(selectedSlot.code)}
           onAssign={handleAssign}
           onClear={handleClearSlot}
